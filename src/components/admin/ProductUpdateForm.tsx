@@ -1,390 +1,412 @@
-import { useState } from "react"
+import { useState } from "react";
 
-import ReactImageGallery from "react-image-gallery"
+import ReactImageGallery from "react-image-gallery";
 
-import { SpinnerCircular } from "spinners-react"
+import { SpinnerCircular } from "spinners-react";
 
-import styled from "styled-components"
+import styled from "styled-components";
 
-import { deleteProductPicture, getItemPicture, updateProduct, uploadProductPicture } from "../../api"
+import {
+  deleteProductPicture,
+  getItemPicture,
+  updateProduct,
+  uploadProductPicture,
+} from "../../api";
 
-import { deleteApiJson, patchApiJson, postApiFormData } from "../../controllers/APICtrl"
+import {
+  deleteApiJson,
+  patchApiJson,
+  postApiFormData,
+} from "../../controllers/APICtrl";
 
-import { sendMiniMessage } from "../../controllers/MessageCtrl"
+import { sendMiniMessage } from "../../controllers/MessageCtrl";
 
+const ProductUpdateForm = ({
+  allowAdmin,
+  setProductView,
+  productData,
+}: {
+  allowAdmin: string;
+  setProductView: any;
+  productData: any;
+}) => {
+  const [imageArray, setImageArray] = useState(
+    productData.pics.map((pic: any) => {
+      return {
+        original: getItemPicture(productData._id, pic.picID),
 
-const ProductUpdateForm = ({ allowAdmin, setProductView, productData }: { allowAdmin: string, setProductView: any, productData: any }) => {
+        thumbnail: getItemPicture(productData._id, pic.picID),
 
-  const [imageArray, setImageArray] = useState(productData.pics.map((pic: any) => {
+        originalHeight: 300,
+        thumbnailHeight: 80,
+      };
+    }),
+  );
 
-    return {
-
-      original: getItemPicture(productData._id, pic.picID),
-
-      thumbnail: getItemPicture(productData._id, pic.picID),
-
-      originalHeight: 300, thumbnailHeight: 80
-
-    }
-
-  }))
-
-  const [loadingText, setLoadingText] = useState("")
+  const [loadingText, setLoadingText] = useState("");
 
   const sendProductUpdateForm = async (e: any) => {
-
-    e.preventDefault()
+    e.preventDefault();
 
     // Save product
-    const form = (e.target as HTMLFormElement)
+    const form = e.target as HTMLFormElement;
 
     const newProductData = {
+      title: form["elpis-adap-ptitle"].value,
 
-      title: form['elpis-adap-ptitle'].value,
+      description: form["elpis-adap-pdesc"].value,
 
-      description: form['elpis-adap-pdesc'].value,
+      price: parseInt(form["elpis-adap-pprice"].value),
 
-      price: parseInt(form['elpis-adap-pprice'].value),
+      section: form["elpis-adap-psect"].value,
+    };
 
-      section: form['elpis-adap-psect'].value,
+    setLoadingText("Updating Product Data");
 
-    }
-
-    setLoadingText("Updating Product Data")
-
-    const creationData = await patchApiJson(updateProduct(allowAdmin, productData._id), newProductData)
+    const creationData = await patchApiJson(
+      updateProduct(allowAdmin, productData._id),
+      newProductData,
+    );
 
     if (creationData.error) {
+      sendMiniMessage(
+        {
+          icon: { name: "times", style: {} },
 
-      sendMiniMessage({
-
-        icon: { name: "times", style: {} },
-
-        content: { text: "An Error Occured!", style: {} },
-
-      }, 2000)
-
+          content: { text: "An Error Occured!", style: {} },
+        },
+        2000,
+      );
     } else {
-
       // add pictures
 
-      let good = 0, bad = 0
+      let good = 0,
+        bad = 0;
 
-      const files = form['elpis-adap-pics'].files
+      const files = form["elpis-adap-pics"].files;
 
       if (files.length > 0) {
-
-        await deleteApiJson(deleteProductPicture(allowAdmin, productData._id, 'all'))
-
+        await deleteApiJson(
+          deleteProductPicture(allowAdmin, productData._id, "all"),
+        );
       }
 
       for await (const picture of files) {
+        setLoadingText(`Saving Image (${good + bad + 1})`);
 
-        setLoadingText(`Saving Image (${good + bad + 1})`)
+        const pictureSaveData = await postApiFormData(
+          uploadProductPicture(allowAdmin, creationData._id),
+          { picture },
+        );
 
-        const pictureSaveData = await postApiFormData(uploadProductPicture(allowAdmin, creationData._id), { picture })
-
-        if (pictureSaveData.error) { bad++ }
-
-        else { good++ }
-
+        if (pictureSaveData.error) {
+          bad++;
+        } else {
+          good++;
+        }
       }
 
-      sendMiniMessage({
+      sendMiniMessage(
+        {
+          icon: { name: "info" },
 
-        icon: { name: "info" },
-
-        content: { text: `${good} Saved, ${bad} Failed` }
-
-      }, 2000)
-
+          content: { text: `${good} Saved, ${bad} Failed` },
+        },
+        2000,
+      );
     }
 
-    setLoadingText("")
+    setLoadingText("");
 
-    setImageArray([])
-
-  }
+    setImageArray([]);
+  };
 
   const handleImageInput = async (e: any) => {
+    const files = e.target.files;
 
-    const files = e.target.files
-
-    let allImages: any = []
+    let allImages: any = [];
 
     const getImageUrl = async (file: any) => {
-
       const url = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result);
 
-        reader.onloadend = () => resolve(reader.result)
+        reader.onerror = () => reject("error");
 
-        reader.onerror = () => reject('error')
+        reader.readAsDataURL(file);
+      });
 
-        reader.readAsDataURL(file)
-
-      })
-
-      return url
-
-    }
+      return url;
+    };
 
     for await (const file of files) {
-
-      const imageUrl = await getImageUrl(file)
+      const imageUrl = await getImageUrl(file);
 
       allImages.push({
-
         original: imageUrl,
 
         thumbnail: imageUrl,
 
-        originalHeight: 300, thumbnailHeight: 80
-
-      })
-
+        originalHeight: 300,
+        thumbnailHeight: 80,
+      });
     }
 
-    setImageArray(allImages)
-
-  }
+    setImageArray(allImages);
+  };
 
   return (
-
     <ProductUpdateFormStyle>
-
       <form onSubmit={sendProductUpdateForm}>
-
         <div className="form-pack">
-
           <label htmlFor="elpis-adap-ptitle">Product Title</label>
 
           <div>
-
-            <input required type="text" id='elpis-adap-ptitle' name='elpis-adap-ptitle' placeholder='The title of the product'
-
-              autoComplete="elpis-adap-ptitle" defaultValue={productData.title} />
-
+            <input
+              required
+              type="text"
+              id="elpis-adap-ptitle"
+              name="elpis-adap-ptitle"
+              placeholder="The title of the product"
+              autoComplete="elpis-adap-ptitle"
+              defaultValue={productData.title}
+            />
           </div>
-
         </div>
 
         <div className="form-pack">
-
           <label htmlFor="elpis-adap-pdesc">Product Description</label>
 
           <div>
-
-            <textarea required id='elpis-adap-pdesc' name='elpis-adap-pdesc' placeholder='The description of the product'
-
-              autoComplete="elpis-adap-pdesc" defaultValue={productData.description} />
-
+            <textarea
+              required
+              id="elpis-adap-pdesc"
+              name="elpis-adap-pdesc"
+              placeholder="The description of the product"
+              autoComplete="elpis-adap-pdesc"
+              defaultValue={productData.description}
+            />
           </div>
-
         </div>
 
         <div className="form-pack">
-
           <label htmlFor="elpis-adap-pprice">Product Price</label>
 
           <div>
-
-            <input required type="number" id='elpis-adap-pprice' name='elpis-adap-pprice' placeholder='50' min={1}
-
-              autoComplete="elpis-adap-pprice" defaultValue={productData.price} />
-
+            <input
+              required
+              type="number"
+              id="elpis-adap-pprice"
+              name="elpis-adap-pprice"
+              placeholder="50"
+              min={1}
+              autoComplete="elpis-adap-pprice"
+              defaultValue={productData.price}
+            />
           </div>
-
         </div>
 
         <div className="form-pack rrd">
-
           <div className="rad">
-
             <label htmlFor="elpis-adap-psect-l">Cloth</label>
 
-            <input type="radio" name="elpis-adap-psect" id="elpis-adap-psect-l"
-
-              value="Cloth" defaultChecked={productData.section === "Cloth"} />
-
+            <input
+              type="radio"
+              name="elpis-adap-psect"
+              id="elpis-adap-psect-l"
+              value="Cloth"
+              defaultChecked={productData.section === "Cloth"}
+            />
           </div>
 
           <div className="rad">
-
             <label htmlFor="elpis-adap-psect-s">Shoe</label>
 
-            <input type="radio" name="elpis-adap-psect" id="elpis-adap-psect-s"
-
-              value="Shoe" defaultChecked={productData.section === "Shoe"} />
-
+            <input
+              type="radio"
+              name="elpis-adap-psect"
+              id="elpis-adap-psect-s"
+              value="Shoe"
+              defaultChecked={productData.section === "Shoe"}
+            />
           </div>
 
           <div className="rad">
-
             <label htmlFor="elpis-adap-psect-c">Cosmetic</label>
 
-            <input type="radio" name="elpis-adap-psect" id="elpis-adap-psect-c"
-
-              value="Cosmetic" defaultChecked={productData.section === "Cosmetic"} />
-
+            <input
+              type="radio"
+              name="elpis-adap-psect"
+              id="elpis-adap-psect-c"
+              value="Cosmetic"
+              defaultChecked={productData.section === "Cosmetic"}
+            />
           </div>
-
         </div>
 
         <div className="form-pack">
-
           <label htmlFor="elpis-adap-pprice">Product Pictures</label>
 
           <div className="pics">
-
-            <ReactImageGallery items={imageArray} showIndex={true} showThumbnails={true} showBullets={true} showFullscreenButton={false} />
-
+            <ReactImageGallery
+              items={imageArray}
+              showIndex={true}
+              showThumbnails={true}
+              showBullets={true}
+              showFullscreenButton={false}
+            />
           </div>
 
           <div className="fila">
-
             <span>Replace Pictures</span>
 
-            <input type="file" name="elpis-adap-pics" id="elpis-adap-pics" multiple accept="image/png, image/jpg, image/jpeg" onInput={handleImageInput} />
-
+            <input
+              type="file"
+              name="elpis-adap-pics"
+              id="elpis-adap-pics"
+              multiple
+              accept="image/png, image/jpg, image/jpeg"
+              onInput={handleImageInput}
+            />
           </div>
-
         </div>
 
         <div className="end-pack">
-
           <button type={"submit"}>Update Product</button>
-
         </div>
 
         <div className="end-pack">
-
-          <button type="button" className="rxtd" onClick={() => setProductView("")} >Go Back</button>
-
+          <button
+            type="button"
+            className="rxtd"
+            onClick={() => setProductView("")}
+          >
+            Go Back
+          </button>
         </div>
-
       </form>
 
-      {loadingText !== "" && <div className="abs-form">
+      {loadingText !== "" && (
+        <div className="abs-form">
+          <div>
+            <SpinnerCircular size="7pc" color="#fff" />
 
-        <div>
-
-          <SpinnerCircular size="7pc" color="#fff" />
-
-          {loadingText}
-
+            {loadingText}
+          </div>
         </div>
-
-      </div>}
-
+      )}
     </ProductUpdateFormStyle>
-
-  )
-
-}
+  );
+};
 
 const ProductUpdateFormStyle = styled.div`
   width: 100%;
 
   form {
-
     width: 80%;
     margin: 0 auto;
     padding: 1pc 0;
     z-index: 10;
-    
-    .form-pack{
+
+    .form-pack {
       width: 100%;
       display: flex;
       flex-direction: column;
       padding-bottom: 1pc;
-      
+
       &.rrd {
         flex-direction: row;
 
         .rad {
           padding: 1pc;
           display: flex;
-
         }
 
-        label {cursor: pointer;}
+        label {
+          cursor: pointer;
+        }
 
         input {
           width: auto;
           border-radius: 0.2rem;
-          margin-left: .5pc;
-          transition: background-color .5s;
+          margin-left: 0.5pc;
+          transition: background-color 0.5s;
           box-shadow: 0 0 0;
         }
       }
 
-      label{
+      label {
         font-weight: bold;
       }
 
-      input, textarea {
+      input,
+      textarea {
         background-color: #f6f6f6;
-        padding: 0.2rem .5rem;
-        border: 0 none; outline: 0 none;
+        padding: 0.2rem 0.5rem;
+        border: 0 none;
+        outline: 0 none;
         width: 100%;
         border-radius: 0.2rem;
         padding-right: 2rem;
-        transition: background-color .5s;
-        box-shadow: 2px 2px 5px rgba(0,0,0,.3);
+        transition: background-color 0.5s;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
       }
 
       textarea {
         height: 5pc;
       }
 
-      .icon-hol{
+      .icon-hol {
         width: 1.8rem;
         cursor: pointer;
         height: 100%;
         position: absolute;
-        right: 0; top: 0;
+        right: 0;
+        top: 0;
         display: flex;
         align-items: center;
         justify-content: center;
       }
 
-      .valid-text{
+      .valid-text {
         line-height: 1rem;
         position: absolute;
-        top: calc(100% - .3rem); left: 0%;
+        top: calc(100% - 0.3rem);
+        left: 0%;
         width: 100%;
         text-align: center;
-        font-size: .7pc;
+        font-size: 0.7pc;
       }
 
-      &.good{
-
-        input{
+      &.good {
+        input {
           background-color: #c6e0c6;
         }
 
-        .valid-text{
+        .valid-text {
           color: green;
         }
       }
 
-      &.bad{
-
-        input{
+      &.bad {
+        input {
           background-color: #f4c6c6;
         }
 
-        .valid-text{
+        .valid-text {
           color: red;
         }
       }
 
       .pics {
         width: 100%;
-        background-color: rgba(0,0,0,.01);
-        background: radial-gradient(rgba(0,0,0,.2), transparent, transparent);
+        background-color: rgba(0, 0, 0, 0.01);
+        background: radial-gradient(
+          rgba(0, 0, 0, 0.2),
+          transparent,
+          transparent
+        );
 
         padding-bottom: 1pc;
         overflow: hidden;
@@ -395,24 +417,27 @@ const ProductUpdateFormStyle = styled.div`
         display: flex;
         width: 100%;
         background-color: #3c73e9;
-        border: 0 none; outline: 0 none;
+        border: 0 none;
+        outline: 0 none;
         color: white;
         border-radius: 0.2rem;
-        padding: 0 .5rem;
+        padding: 0 0.5rem;
         cursor: pointer;
-        transition: background-color .5s;
+        transition: background-color 0.5s;
         display: flex;
         align-items: center;
         justify-content: center;
 
-        &:hover{
+        &:hover {
           background-color: #173167;
         }
 
         input {
           position: absolute;
-          top: 0%; bottom: 0%;
-          left: 0%; right: 0%;
+          top: 0%;
+          bottom: 0%;
+          left: 0%;
+          right: 0%;
           width: 100%;
           opacity: 0;
           height: 100%;
@@ -423,65 +448,67 @@ const ProductUpdateFormStyle = styled.div`
       }
     }
 
-    .end-pack{
-      padding-top: .75rem;
+    .end-pack {
+      padding-top: 0.75rem;
 
-      button{
+      button {
         width: 100%;
         background-color: #3c73e9;
-        border: 0 none; outline: 0 none;
+        border: 0 none;
+        outline: 0 none;
         color: white;
         border-radius: 0.2rem;
-        padding: 0 .5rem;
+        padding: 0 0.5rem;
         cursor: pointer;
-        transition: background-color .5s;
+        transition: background-color 0.5s;
         display: flex;
         align-items: center;
         justify-content: center;
-        
+
         &.rxtd {
           background-color: #6e1c1c;
-          
+
           &:hover {
             background-color: #290808;
           }
         }
 
-        span{
+        span {
           display: inline-block;
           padding-right: 0.3rem;
         }
 
-        &:hover{
+        &:hover {
           background-color: #173167;
         }
 
-        &:disabled{
-          opacity: .5;
+        &:disabled {
+          opacity: 0.5;
           cursor: not-allowed;
         }
 
-        &:disabled:hover{
+        &:disabled:hover {
           background-color: #3c73e9;
         }
       }
     }
-
   }
 
   .abs-form {
     position: fixed;
-    top: 0; left: 0;
-    bottom: 0; right: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
     width: 100%;
     height: 100%;
     z-index: 12;
-    background-color: rgba(0,0,0,.5);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    
+
     div {
       display: flex;
       align-items: center;
@@ -491,6 +518,6 @@ const ProductUpdateFormStyle = styled.div`
       line-height: 3pc;
     }
   }
-`
+`;
 
-export default ProductUpdateForm
+export default ProductUpdateForm;

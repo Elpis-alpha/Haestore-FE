@@ -1,186 +1,173 @@
-import { useState } from "react"
+import { useState } from "react";
 
-import styled from "styled-components"
+import styled from "styled-components";
 
-import { deleteProduct, getProductbyTitle } from "../../api"
+import { deleteProduct, getProductbyTitle } from "../../api";
 
-import { deleteApiJson, getApiJson } from "../../controllers/APICtrl"
+import { deleteApiJson, getApiJson } from "../../controllers/APICtrl";
 
-import { sendMiniMessage } from "../../controllers/MessageCtrl"
+import { sendMiniMessage } from "../../controllers/MessageCtrl";
 
-import ProductCreationForm from "./ProductCreationForm"
+import ProductCreationForm from "./ProductCreationForm";
 
-import ProductUpdateForm from "./ProductUpdateForm"
-
+import ProductUpdateForm from "./ProductUpdateForm";
 
 const AdminActions = ({ allowAdmin }: { allowAdmin: string }) => {
+  const [productView, setProductView] = useState("");
 
-  const [productView, setProductView] = useState("")
-
-  const [productData, setProductData] = useState({})
+  const [productData, setProductData] = useState({});
 
   const updateProduct = async (e: any) => {
-
     e.preventDefault();
 
-    setProductData({})
+    setProductData({});
 
-    const form = (e.target as HTMLFormElement)
+    const form = e.target as HTMLFormElement;
 
-    const title = form['adap-product-name'].value
+    const title = form["adap-product-name"].value;
 
-    form.reset()
+    form.reset();
 
-    sendMiniMessage({
+    sendMiniMessage(
+      {
+        icon: { name: "loading", style: {} },
 
-      icon: { name: "loading", style: {} },
+        content: { text: "Searching for Product", style: {} },
+      },
+      2000,
+    );
 
-      content: { text: "Searching for Product", style: {} },
-
-    }, 2000)
-
-    const fetchProductData = await getApiJson(getProductbyTitle(title))
+    const fetchProductData = await getApiJson(getProductbyTitle(title));
 
     if (fetchProductData.error) {
+      sendMiniMessage(
+        {
+          icon: { name: "times", style: {} },
 
-      sendMiniMessage({
-
-        icon: { name: "times", style: {} },
-
-        content: { text: "Product not found!", style: {} },
-
-      }, 2000)
-
+          content: { text: "Product not found!", style: {} },
+        },
+        2000,
+      );
     } else {
+      sendMiniMessage(
+        {
+          icon: { name: "ok", style: {} },
 
-      sendMiniMessage({
+          content: { text: "Product Found!", style: {} },
+        },
+        2000,
+      );
 
-        icon: { name: "ok", style: {} },
+      setProductData(fetchProductData);
 
-        content: { text: "Product Found!", style: {} },
-
-      }, 2000)
-
-      setProductData(fetchProductData)
-
-      setProductView("update")
-
+      setProductView("update");
     }
-
-  }
+  };
 
   const deleteProductX = async (e: any) => {
-
     e.preventDefault();
 
-    const form = (e.target as HTMLFormElement)
+    const form = e.target as HTMLFormElement;
 
-    const title = form['adap-product-name'].value
+    const title = form["adap-product-name"].value;
 
-    form.reset()
+    form.reset();
 
-    sendMiniMessage({
+    sendMiniMessage(
+      {
+        icon: { name: "loading", style: {} },
 
-      icon: { name: "loading", style: {} },
+        content: { text: "Searching for Product", style: {} },
+      },
+      2000,
+    );
 
-      content: { text: "Searching for Product", style: {} },
-
-    }, 2000)
-
-    const fetchProductData = await getApiJson(getProductbyTitle(title))
+    const fetchProductData = await getApiJson(getProductbyTitle(title));
 
     if (fetchProductData.error) {
+      sendMiniMessage(
+        {
+          icon: { name: "times", style: {} },
 
-      sendMiniMessage({
-
-        icon: { name: "times", style: {} },
-
-        content: { text: "Product not found!", style: {} },
-
-      }, 2000)
-
+          content: { text: "Product not found!", style: {} },
+        },
+        2000,
+      );
     } else {
-
       sendMiniMessage({
-
         icon: { name: "loading", style: {} },
 
         content: { text: "Deleting Product!", style: {} },
+      });
 
-      })
-
-      const deleteProductData = await deleteApiJson(deleteProduct(allowAdmin, fetchProductData._id))
+      const deleteProductData = await deleteApiJson(
+        deleteProduct(allowAdmin, fetchProductData._id),
+      );
 
       if (deleteProductData.error) {
+        sendMiniMessage(
+          {
+            icon: { name: "times", style: {} },
 
-        sendMiniMessage({
-
-          icon: { name: "times", style: {} },
-
-          content: { text: "Product Deletion Failed!", style: {} },
-
-        }, 2000)
-
+            content: { text: "Product Deletion Failed!", style: {} },
+          },
+          2000,
+        );
       } else {
+        sendMiniMessage(
+          {
+            icon: { name: "ok", style: {} },
 
-        sendMiniMessage({
-
-          icon: { name: "ok", style: {} },
-
-          content: { text: "Product Deleted!", style: {} },
-
-        }, 2000)
-
+            content: { text: "Product Deleted!", style: {} },
+          },
+          2000,
+        );
       }
-
     }
-
-  }
+  };
 
   if (productView === "") {
-
     return (
-
       <AdminActionsStyle>
-
         <div className="a-pack">
-
-          <button onClick={() => setProductView("create")}>Create Product</button>
-
+          <button onClick={() => setProductView("create")}>
+            Create Product
+          </button>
         </div>
 
         <form className="a-pack" onSubmit={updateProduct}>
-
-          <input type="text" required autoComplete="adap-product-name" name="adap-product-name" placeholder="Product Name" />
+          <input
+            type="text"
+            required
+            autoComplete="adap-product-name"
+            name="adap-product-name"
+            placeholder="Product Name"
+          />
 
           <button>Update Product</button>
-
         </form>
 
         <form className="a-pack" onSubmit={deleteProductX}>
-
-          <input type="text" required autoComplete="adap-product-name" name="adap-product-name" placeholder="Product Name" />
+          <input
+            type="text"
+            required
+            autoComplete="adap-product-name"
+            name="adap-product-name"
+            placeholder="Product Name"
+          />
 
           <button>Delete Product</button>
-
         </form>
-
       </AdminActionsStyle>
-
-    )
-
+    );
   } else if (productView === "create") {
-
-    return <ProductCreationForm {...{ allowAdmin, setProductView }} />
-
+    return <ProductCreationForm {...{ allowAdmin, setProductView }} />;
   } else if (productView === "update") {
-
-    return <ProductUpdateForm {...{ allowAdmin, setProductView, productData }} />
-
-  } else return <>productView: {productView}</>
-
-
-}
+    return (
+      <ProductUpdateForm {...{ allowAdmin, setProductView, productData }} />
+    );
+  } else return <>productView: {productView}</>;
+};
 
 const AdminActionsStyle = styled.div`
   width: 100%;
@@ -197,48 +184,50 @@ const AdminActionsStyle = styled.div`
     align-items: center;
     justify-content: baseline;
     flex-direction: column;
-    box-shadow: 2px 2px 5px rgba(0,0,0,.5);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 
     input {
       margin-bottom: 1pc;
 
       background-color: #dddddd;
       text-align: center;
-      padding: 0.2rem .5rem;
-      border: 0 none; outline: 0 none;
+      padding: 0.2rem 0.5rem;
+      border: 0 none;
+      outline: 0 none;
       width: 100%;
       border-radius: 0.2rem;
       padding-right: 2rem;
-      transition: background-color .5s;
+      transition: background-color 0.5s;
     }
 
     button {
       width: 100%;
       background-color: #3c73e9;
-      border: 0 none; outline: 0 none;
+      border: 0 none;
+      outline: 0 none;
       color: white;
       border-radius: 0.2rem;
-      padding: 0 .5rem;
+      padding: 0 0.5rem;
       cursor: pointer;
-      transition: background-color .5s;
+      transition: background-color 0.5s;
       display: flex;
       align-items: center;
       justify-content: center;
 
-      &:hover{
+      &:hover {
         background-color: #173167;
       }
 
-      &:disabled{
-        opacity: .5;
+      &:disabled {
+        opacity: 0.5;
         cursor: not-allowed;
       }
 
-      &:disabled:hover{
+      &:disabled:hover {
         background-color: #3c73e9;
       }
     }
   }
-`
+`;
 
-export default AdminActions
+export default AdminActions;

@@ -1,3 +1,4 @@
+import React from 'react'
 import { setMiniMessage, setNormalMessage, setSmallMessage, setXMessage } from '../store/slice/messagesSlice'
 
 import store from '../store/store'
@@ -131,7 +132,12 @@ export const removeNormalMessage = () => {
 
 }
 
-export const sendXMessage = async ({ heading = {}, content = {}, buttons = [], style = {} }) => {
+export const sendXMessage = async ({ heading = {}, content = {}, buttons = [], style = {} }: {
+  heading?: { text?: string, style?: React.CSSProperties },
+  content?: { text?: string, style?: React.CSSProperties },
+  buttons?: { text: string, waitFor: string, style?: React.CSSProperties }[],
+  style?: React.CSSProperties
+}) => {
 
   const accepted = await new Promise(resolve => {
 

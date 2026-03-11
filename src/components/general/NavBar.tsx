@@ -1,212 +1,198 @@
-import styled from "styled-components"
-
-import { Link, useNavigate } from "react-router-dom"
-
-import Parse from "html-react-parser"
-
-import { siteName, tokenCookieName } from "../../__env"
-
-import { useDispatch, useSelector } from "react-redux"
-
-import { Squeeze as Hamburger } from "hamburger-react"
-
-import useWindowDimensions from "../../hooks/useWindowDimensions"
-
-import { useState } from "react"
-
-import { waitFor } from "../../controllers/TimeCtrl"
-
-import { stateClass } from "../../controllers/UICtrl"
-import Cookies from "universal-cookie"
-import { sendMiniMessage, sendXMessage } from "../../controllers/MessageCtrl"
-import { logoutUser } from "../../api"
-import { postApiJson } from "../../controllers/APICtrl"
-import { removeUserData } from "../../store/slice/userSlice"
-import { removeCartData } from "../../store/slice/cartSlice"
-
+import styled from "styled-components";
+import { Link, useNavigate } from "react-router-dom";
+import Parse from "html-react-parser";
+import { siteName, tokenCookieName } from "../../__env";
+import { useDispatch, useSelector } from "react-redux";
+import { Squeeze as Hamburger } from "hamburger-react";
+import useWindowDimensions from "../../hooks/useWindowDimensions";
+import { useState } from "react";
+import { waitFor } from "../../controllers/TimeCtrl";
+import { stateClass } from "../../controllers/UICtrl";
+import Cookies from "universal-cookie";
+import { sendMiniMessage, sendXMessage } from "../../controllers/MessageCtrl";
+import { logoutUser } from "../../api";
+import { postApiJson } from "../../controllers/APICtrl";
+import { removeUserData } from "../../store/slice/userSlice";
+import { removeCartData } from "../../store/slice/cartSlice";
 
 const NavBar = () => {
-
-  const navigate = useNavigate()
-
-  const cookies = new Cookies()
-
-  const dispatch = useDispatch()
-
-  const { available } = useSelector((store: any) => store.user)
-
-  const { width } = useWindowDimensions()
-
-  const [navOpen, setNavOpen] = useState(false)
-
-  const [navClosing, setNavClosing] = useState(false)
+  const navigate = useNavigate();
+  const cookies = new Cookies();
+  const dispatch = useDispatch();
+  const { available } = useSelector((store: any) => store.user);
+  const { width } = useWindowDimensions();
+  const [navOpen, setNavOpen] = useState(false);
+  const [navClosing, setNavClosing] = useState(false);
 
   const toggleNav = async (val: any) => {
-
-    setNavClosing(false)
+    setNavClosing(false);
 
     // Start transition when closing
-    if (val === false) setNavClosing(true)
+    if (val === false) setNavClosing(true);
 
-    setNavOpen(val)
+    setNavOpen(val);
 
     // End transition when closing
     if (val === false) {
+      await waitFor(500);
 
-      await waitFor(500)
-
-      setNavClosing(false)
+      setNavClosing(false);
     }
-
-  }
+  };
 
   const closeNav = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const target = (e.target as HTMLDivElement).classList;
 
-    const target = (e.target as HTMLDivElement).classList
-
-    if (target.contains("r-side") && target.contains("show")) toggleNav(false)
-
-  }
+    if (target.contains("r-side") && target.contains("show")) toggleNav(false);
+  };
 
   const logoutThisUser = async (e: any) => {
+    e.preventDefault();
 
-    e.preventDefault()
-
-    toggleNav(false)
+    toggleNav(false);
 
     const res = await sendXMessage({
-
       heading: { text: "Confirm Logout" },
 
       buttons: [
+        {
+          text: "Yes, Logout",
+          waitFor: "se",
+          style: { backgroundColor: "darkred" },
+        },
 
-        // @ts-ignore
-        { text: 'Yes, Logout', waitFor: 'se', style: { backgroundColor: 'darkred' } },
-
-        // @ts-ignore
-        { text: 'Go Back', waitFor: 're', style: { backgroundColor: '#607d8b' } },
-
+        {
+          text: "Go Back",
+          waitFor: "re",
+          style: { backgroundColor: "#607d8b" },
+        },
       ],
+    });
 
-    })
-
-    if (res !== "se") return false
+    if (res !== "se") return false;
 
     sendMiniMessage({
-
       icon: { name: "loading", style: {} },
 
       content: { text: "Logging Out!", style: {} },
 
-      style: {}
+      style: {},
+    });
 
-    })
-
-    const logoutData = await postApiJson(logoutUser())
+    const logoutData = await postApiJson(logoutUser());
 
     if (logoutData.error) {
+      sendMiniMessage(
+        {
+          icon: { name: "times", style: {} },
 
-      sendMiniMessage({
+          content: { text: "An Error Occured!", style: {} },
 
-        icon: { name: "times", style: {} },
-
-        content: { text: "An Error Occured!", style: {} },
-
-        style: {}
-
-      }, 2000)
-
+          style: {},
+        },
+        2000,
+      );
     } else {
+      sendMiniMessage(
+        {
+          icon: { name: "ok" },
 
-      sendMiniMessage({
+          content: { text: "Logged Out!" },
+        },
+        2000,
+      );
 
-        icon: { name: "ok" },
+      cookies.remove(tokenCookieName, { path: "/" });
 
-        content: { text: "Logged Out!" }
+      dispatch(removeUserData());
 
-      }, 2000)
+      dispatch(removeCartData());
 
-      cookies.remove(tokenCookieName, { path: '/' })
-
-      dispatch(removeUserData())
-
-      dispatch(removeCartData())
-
-      navigate("/login")
-
+      navigate("/login");
     }
-
-  }
+  };
 
   return (
-
-    <NavBarStyle style={{ zIndex: (navOpen || navClosing) ? 80 : 30 }}>
-
+    <NavBarStyle style={{ zIndex: navOpen || navClosing ? 80 : 30 }}>
       <nav>
-
         <div className="in-nav">
-
           <div className="header">
-
-            <h1><Link to="/">{siteName}</Link></h1>
-
+            <h1>
+              <Link to="/">{siteName}</Link>
+            </h1>
           </div>
 
-          <div className={"r-side " + stateClass(navOpen, "show") + stateClass(navClosing, "show close")} onClick={closeNav}>
-
-            {available ?
-
-              <ul className="children">
-
-                <li className="only-small"><Link to="/?view=query" onClick={() => toggleNav(false)}>Home</Link></li>
-
-                <li><Link to="/signup" onClick={logoutThisUser}>Logout</Link></li>
-
-              </ul>
-
-              :
-
-              <ul className="children">
-
-                <li className="only-small"><Link to="/?view=query" onClick={() => toggleNav(false)}>Home</Link></li>
-
-                <li><Link to="/signup" onClick={() => toggleNav(false)}>Signup</Link></li>
-
-                <li><Link to="/login" onClick={() => toggleNav(false)}>Login</Link></li>
-
-              </ul>
-
+          <div
+            className={
+              "r-side " +
+              stateClass(navOpen, "show") +
+              stateClass(navClosing, "show close")
             }
+            onClick={closeNav}
+          >
+            {available ? (
+              <ul className="children">
+                <li className="only-small">
+                  <Link to="/?view=query" onClick={() => toggleNav(false)}>
+                    Home
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to="/signup" onClick={logoutThisUser}>
+                    Logout
+                  </Link>
+                </li>
+              </ul>
+            ) : (
+              <ul className="children">
+                <li className="only-small">
+                  <Link to="/?view=query" onClick={() => toggleNav(false)}>
+                    Home
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to="/signup" onClick={() => toggleNav(false)}>
+                    Signup
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to="/login" onClick={() => toggleNav(false)}>
+                    Login
+                  </Link>
+                </li>
+              </ul>
+            )}
 
             <div className="nav-ham-in">
-
-              <Hamburger toggled={navOpen} toggle={toggleNav} size={35} distance="sm" rounded />
-
+              <Hamburger
+                toggled={navOpen}
+                toggle={toggleNav}
+                size={35}
+                distance="sm"
+                rounded
+              />
             </div>
-
           </div>
 
           <div className="nav-ham">
-
-            <Hamburger toggled={navOpen} toggle={toggleNav} size={35} distance="sm" rounded />
-
+            <Hamburger
+              toggled={navOpen}
+              toggle={toggleNav}
+              size={35}
+              distance="sm"
+              rounded
+            />
           </div>
-
         </div>
-
       </nav>
 
-      <div className="curvy-stuff">
-
-        {chooseSVG(width)}
-
-      </div>
-
+      <div className="curvy-stuff">{chooseSVG(width)}</div>
     </NavBarStyle>
-
-  )
-
-}
+  );
+};
 
 const NavBarStyle = styled.div`
   z-index: 30;
@@ -217,6 +203,9 @@ const NavBarStyle = styled.div`
     z-index: 15;
     /* background-color: #07165a; */
     color: white;
+
+    max-width: 1500px;
+    margin: 0 auto;
 
     .in-nav {
       display: flex;
@@ -236,7 +225,7 @@ const NavBarStyle = styled.div`
         padding-right: 1.5rem;
 
         li a {
-          padding: .75rem 1.5rem;
+          padding: 0.75rem 1.5rem;
           display: block;
           color: inherit;
           text-decoration: none;
@@ -257,25 +246,36 @@ const NavBarStyle = styled.div`
       }
 
       @keyframes scale-int {
-        from{ transform: scale(0) }
-        to{ transform: scale(1) }
+        from {
+          transform: scale(0);
+        }
+        to {
+          transform: scale(1);
+        }
       }
 
       @keyframes scale-int-r {
-        from{ transform: scale(1) }
-        to{ transform: scale(0) }
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(0);
+        }
       }
 
       @media screen and (max-width: 800px) {
-
         @media screen and (max-width: 500px) {
-          h1 { font-size: 1.6pc;}
+          h1 {
+            font-size: 1.6pc;
+          }
         }
-        
+
         @media screen and (max-width: 350px) {
-          h1 { font-size: 1.5pc }
+          h1 {
+            font-size: 1.5pc;
+          }
         }
-        
+
         .r-side {
           display: none;
 
@@ -284,12 +284,14 @@ const NavBarStyle = styled.div`
             align-items: center;
             justify-content: center;
             position: fixed;
-            top: 0; left: 0;
-            right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             z-index: 150;
-            background-color: rgba(0, 0, 0, .3);
+            background-color: rgba(0, 0, 0, 0.3);
             /* transform: scale(1); */
-            animation: scale-int .5s 1;
+            animation: scale-int 0.5s 1;
 
             ul.children {
               min-width: 60vw;
@@ -311,14 +313,14 @@ const NavBarStyle = styled.div`
                 /* transition: background-color .5s; */
 
                 &:hover {
-                  background-color: rgba(0, 0, 0, .3);
+                  background-color: rgba(0, 0, 0, 0.3);
                 }
               }
             }
 
             &.close {
               transform: scale(0);
-              animation: scale-int-r .5s 1;
+              animation: scale-int-r 0.5s 1;
             }
           }
         }
@@ -326,7 +328,7 @@ const NavBarStyle = styled.div`
         .nav-ham {
           display: flex;
         }
-        
+
         .nav-ham-in {
           display: flex;
           color: red;
@@ -346,7 +348,8 @@ const NavBarStyle = styled.div`
   .curvy-stuff {
     z-index: 10;
     position: absolute;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     right: 0;
     display: flex;
 
@@ -354,15 +357,12 @@ const NavBarStyle = styled.div`
       display: block;
     }
   }
-
-`
+`;
 
 const chooseSVG = (width: number) => {
-
-  let desiredSVG: any = <></>
+  let desiredSVG: any = <></>;
 
   if (width >= 1000) {
-
     desiredSVG = Parse(`
     <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 400" xmlns="http://www.w3.org/2000/svg" class="transition duration-300 ease-in-out delay-150"><style>
     .path-0{
@@ -409,10 +409,8 @@ const chooseSVG = (width: number) => {
         d: path("M 0,400 C 0,400 0,266 0,266 C 77.46153846153848,235.8128205128205 154.92307692307696,205.62564102564102 246,223 C 337.07692307692304,240.37435897435898 441.7692307692307,305.31025641025644 517,310 C 592.2307692307693,314.68974358974356 638,259.1333333333333 719,236 C 800,212.86666666666667 916.2307692307693,222.15641025641023 1003,226 C 1089.7692307692307,229.84358974358977 1147.076923076923,228.24102564102566 1215,234 C 1282.923076923077,239.75897435897434 1361.4615384615386,252.87948717948717 1440,266 C 1440,266 1440,400 1440,400 Z");
       }
     }</style><defs><linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="5%" stop-color="#1d2962ff"></stop><stop offset="95%" stop-color="#1d39c7ff"></stop></linearGradient></defs><path d="M 0,400 C 0,400 0,266 0,266 C 77.46153846153848,235.8128205128205 154.92307692307696,205.62564102564102 246,223 C 337.07692307692304,240.37435897435898 441.7692307692307,305.31025641025644 517,310 C 592.2307692307693,314.68974358974356 638,259.1333333333333 719,236 C 800,212.86666666666667 916.2307692307693,222.15641025641023 1003,226 C 1089.7692307692307,229.84358974358977 1147.076923076923,228.24102564102566 1215,234 C 1282.923076923077,239.75897435897434 1361.4615384615386,252.87948717948717 1440,266 C 1440,266 1440,400 1440,400 Z" stroke="none" stroke-width="0" fill="url(#gradient)" class="transition-all duration-300 ease-in-out delay-150 path-1" transform="rotate(-180 720 200)"></path></svg>
-    `)
-
+    `);
   } else if (width < 1000 && width >= 700) {
-
     desiredSVG = Parse(`
     <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 500" xmlns="http://www.w3.org/2000/svg" class="transition duration-300 ease-in-out delay-150"><style>
     .path-0{
@@ -459,10 +457,8 @@ const chooseSVG = (width: number) => {
         d: path("M 0,500 C 0,500 0,333 0,333 C 80.2076923076923,315.91282051282053 160.4153846153846,298.825641025641 231,307 C 301.5846153846154,315.174358974359 362.54615384615386,348.6102564102564 442,369 C 521.4538461538461,389.3897435897436 619.4000000000001,396.73333333333335 719,379 C 818.5999999999999,361.26666666666665 919.8538461538462,318.45641025641027 1001,307 C 1082.1461538461538,295.54358974358973 1143.1846153846152,315.44102564102565 1213,325 C 1282.8153846153848,334.55897435897435 1361.4076923076923,333.7794871794872 1440,333 C 1440,333 1440,500 1440,500 Z");
       }
     }</style><defs><linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="5%" stop-color="#1d2962ff"></stop><stop offset="95%" stop-color="#1d39c7ff"></stop></linearGradient></defs><path d="M 0,500 C 0,500 0,333 0,333 C 80.2076923076923,315.91282051282053 160.4153846153846,298.825641025641 231,307 C 301.5846153846154,315.174358974359 362.54615384615386,348.6102564102564 442,369 C 521.4538461538461,389.3897435897436 619.4000000000001,396.73333333333335 719,379 C 818.5999999999999,361.26666666666665 919.8538461538462,318.45641025641027 1001,307 C 1082.1461538461538,295.54358974358973 1143.1846153846152,315.44102564102565 1213,325 C 1282.8153846153848,334.55897435897435 1361.4076923076923,333.7794871794872 1440,333 C 1440,333 1440,500 1440,500 Z" stroke="none" stroke-width="0" fill="url(#gradient)" class="transition-all duration-300 ease-in-out delay-150 path-1" transform="rotate(-180 720 250)"></path></svg>
-    `)
-
+    `);
   } else if (width < 700 && width >= 500) {
-
     desiredSVG = Parse(`
     <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 600" xmlns="http://www.w3.org/2000/svg" class="transition duration-300 ease-in-out delay-150"><style>
     .path-0{
@@ -509,10 +505,8 @@ const chooseSVG = (width: number) => {
         d: path("M 0,600 C 0,600 0,400 0,400 C 67.76153846153846,417.7153846153846 135.52307692307693,435.4307692307692 212,447 C 288.4769230769231,458.5692307692308 373.6692307692307,463.99230769230775 447,436 C 520.3307692307693,408.00769230769225 581.8000000000001,346.59999999999997 682,327 C 782.1999999999999,307.40000000000003 921.1307692307691,329.60769230769233 1001,346 C 1080.8692307692309,362.39230769230767 1101.676923076923,372.96923076923076 1165,381 C 1228.323076923077,389.03076923076924 1334.1615384615384,394.5153846153846 1440,400 C 1440,400 1440,600 1440,600 Z");
       }
     }</style><defs><linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="5%" stop-color="#1d2962ff"></stop><stop offset="95%" stop-color="#1d39c7ff"></stop></linearGradient></defs><path d="M 0,600 C 0,600 0,400 0,400 C 67.76153846153846,417.7153846153846 135.52307692307693,435.4307692307692 212,447 C 288.4769230769231,458.5692307692308 373.6692307692307,463.99230769230775 447,436 C 520.3307692307693,408.00769230769225 581.8000000000001,346.59999999999997 682,327 C 782.1999999999999,307.40000000000003 921.1307692307691,329.60769230769233 1001,346 C 1080.8692307692309,362.39230769230767 1101.676923076923,372.96923076923076 1165,381 C 1228.323076923077,389.03076923076924 1334.1615384615384,394.5153846153846 1440,400 C 1440,400 1440,600 1440,600 Z" stroke="none" stroke-width="0" fill="url(#gradient)" class="transition-all duration-300 ease-in-out delay-150 path-1" transform="rotate(-180 720 300)"></path></svg>
-    `)
-
+    `);
   } else if (width < 500) {
-
     desiredSVG = Parse(`
     <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 700" xmlns="http://www.w3.org/2000/svg" class="transition duration-300 ease-in-out delay-150"><style>
     .path-0{
@@ -559,12 +553,10 @@ const chooseSVG = (width: number) => {
         d: path("M 0,700 C 0,700 0,466 0,466 C 102.41282051282047,458.48717948717945 204.82564102564095,450.97435897435895 276,475 C 347.17435897435905,499.02564102564105 387.1102564102565,554.5897435897436 468,537 C 548.8897435897435,519.4102564102564 670.7333333333332,428.66666666666663 756,403 C 841.2666666666668,377.33333333333337 889.9564102564103,416.7435897435898 953,427 C 1016.0435897435897,437.2564102564102 1093.4410256410256,418.3589743589743 1177,420 C 1260.5589743589744,421.6410256410257 1350.2794871794872,443.8205128205128 1440,466 C 1440,466 1440,700 1440,700 Z");
       }
     }</style><defs><linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="5%" stop-color="#1d2962ff"></stop><stop offset="95%" stop-color="#1d39c7ff"></stop></linearGradient></defs><path d="M 0,700 C 0,700 0,466 0,466 C 102.41282051282047,458.48717948717945 204.82564102564095,450.97435897435895 276,475 C 347.17435897435905,499.02564102564105 387.1102564102565,554.5897435897436 468,537 C 548.8897435897435,519.4102564102564 670.7333333333332,428.66666666666663 756,403 C 841.2666666666668,377.33333333333337 889.9564102564103,416.7435897435898 953,427 C 1016.0435897435897,437.2564102564102 1093.4410256410256,418.3589743589743 1177,420 C 1260.5589743589744,421.6410256410257 1350.2794871794872,443.8205128205128 1440,466 C 1440,466 1440,700 1440,700 Z" stroke="none" stroke-width="0" fill="url(#gradient)" class="transition-all duration-300 ease-in-out delay-150 path-1" transform="rotate(-180 720 350)"></path></svg>
-    `)
-
+    `);
   }
 
-  return desiredSVG
+  return desiredSVG;
+};
 
-}
-
-export default NavBar
+export default NavBar;

@@ -182,6 +182,9 @@ body > #root {
   flex-direction: column;
 }
 
+.page-container {
+  max-width: 1200px;
+}
 body > #root > .App {
   width: 100%;
   flex: 1;
