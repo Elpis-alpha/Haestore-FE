@@ -1,0 +1,7 @@
+.next/
+.open-next/
+.wrangler/
+out/
+coverage/
+node_modules/
+src/lib/api/schema.d.ts

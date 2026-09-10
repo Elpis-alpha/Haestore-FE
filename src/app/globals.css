@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+/*
+ * Hæstore design tokens.
+ *
+ * Derived from the two colours the logo fixes: chocolate #523523 as the ground and
+ * cream #fcf8f4 as the text. Everything else is a tint or shade of those, plus three
+ * accents drawn from the mark itself — clay for actions, moss from the leaf that forms
+ * the H's crossbar, honey for highlights.
+ *
+ * Tailwind v4 declares theme in CSS; there is no tailwind.config.js.
+ */
+@theme {
+  /* Ground and surfaces */
+  --color-bark-950: #1e120b;
+  --color-bark-900: #2a1810;
+  --color-bark-800: #3a2418;
+  --color-bark-700: #462c1d;
+  --color-bark-600: #523523; /* site background — given */
+  --color-bark-500: #63432e;
+  --color-bark-400: #77543c;
+  --color-bark-300: #8d684e;
+
+  /* Ink */
+  --color-cream-50: #fcf8f4; /* primary text — given */
+  --color-cream-100: #f5ede4;
+  --color-cream-200: #e8dacb;
+  --color-cream-300: #d2bca5;
+
+  /* Accents */
+  --color-clay-600: #a85c30;
+  --color-clay-500: #c2703d; /* primary action */
+  --color-clay-400: #d4834a;
+  --color-moss-500: #7c8b5a; /* secondary, success — from the leaf */
+  --color-moss-400: #93a06f;
+  --color-honey-500: #dda74e; /* badges, highlights */
+  --color-brick-500: #b4523a; /* destructive, error */
+
+  /* Type. Fraunces carries the display voice, Karla the interface. */
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+
+  /* The arch, from the bag handle at the top of the logo. The signature shape. */
+  --radius-arch: 9999px 9999px 0.25rem 0.25rem;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    /* rem throughout. The 2022 app sized almost everything in `pc`, an *absolute*
+       unit, behind nine html font-size breakpoints — so that entire responsive
+       ladder had no effect whatsoever. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bark-600);
+    color: var(--color-cream-50);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+  }
+
+  ::selection {
+    background-color: var(--color-clay-500);
+    color: var(--color-cream-50);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-honey-500);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Paper grain. A single fixed overlay rather than a repeating background image, so it
+ * costs one composited layer and never tiles visibly.
+ */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Honour the OS setting globally rather than per-component. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
