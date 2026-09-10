@@ -1,0 +1,301 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
+import type { Category, ProductAttribute } from '@/lib/api/types';
+import {
+  ApiError,
+  getCategories,
+  getCategoryByPath,
+  getProduct,
+  getProducts,
+  softly,
+} from '@/lib/api/client';
+import { breadcrumbFor } from '@/lib/catalog/tree';
+import { Button } from '@/components/ui/button';
+import { SlabRule, VineRule } from '@/components/motifs/rule';
+import { ProductGrid, ProductGridSkeleton } from '@/components/catalog/product-grid';
+import { ProductView, type AxisLabels } from '@/components/catalog/product-view';
+
+/**
+ * One product.
+ *
+ * Served from MongoDB rather than the search index (ADR-003): the index holds a listing
+ * projection, and this page needs the whole document — every variant, every attribute,
+ * the description. It is also the only storefront page whose content is fixed per URL,
+ * which is why it is the only one that caches.
+ *
+ * The specification table needs no attribute lookup at all. `displayValue` is rendered at
+ * write time and the API returns the attributes already sorted into the category's own
+ * group order, so what would classically be a `$lookup` per attribute is a single
+ * document read.
+ *
+ * **There is deliberately no `loading.tsx` here, and there must not be one.** A
+ * `loading.tsx` wraps the route in a Suspense boundary, which lets Next flush the shell —
+ * and commit a 200 — before this component has decided whether the product exists. The
+ * page still renders `not-found.tsx`, but under a 200: a soft 404, which is exactly what
+ * a crawler is told not to trust. Verified by removing the file and watching
+ * `/product/nope` go from 200 to 404.
+ *
+ * Streaming is not given up, only aimed: the Suspense boundary below sits *under* the
+ * existence check, so the related-products query never delays first paint and never
+ * touches the status.
+ */
+
+type PageProps = { params: Promise<{ slug: string }> };
+
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await softly(getProduct(slug), null);
+  if (!product) return { title: 'Not found' };
+
+  const image = product.images[0];
+
+  return {
+    title: product.title,
+    description: product.subtitle ?? product.description?.slice(0, 160),
+    alternates: { canonical: `/product/${product.slug}` },
+    openGraph: {
+      type: 'website',
+      title: product.title,
+      description: product.subtitle ?? product.description?.slice(0, 200),
+      // The same Cloudinary transformation the page's own images use, at the size
+      // link previews actually render, rather than shipping an original.
+      ...(image ? { images: [{ url: ogImageUrl(image.publicId), alt: image.alt }] } : {}),
+    },
+  };
+}
+
+export default async function ProductPage({ params }: PageProps) {
+  const { slug } = await params;
+
+  const product = await getProduct(slug).catch((error: unknown) => {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  });
+  if (!product) notFound();
+
+  const categories = await softly(getCategories(), []);
+  const shelf = categories.find((c) => c._id === product.category);
+
+  // The category endpoint is where axis values get their names and swatches. It is
+  // cached and shared with the listing, so this is a lookup rather than a round trip.
+  const detail = shelf ? await softly(getCategoryByPath(shelf.path), null) : null;
+
+  const axisLabels = buildAxisLabels(detail?.filters ?? []);
+  const trail = shelf ? breadcrumbFor(categories, shelf.path) : [];
+  const groups = groupAttributes(product.attributes);
+
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <Breadcrumb trail={trail} title={product.title} />
+
+      {/* Narrower than the page. The details column is a measure to read, not a space
+          to fill: at full width a specification row set "Roast level ....... Medium"
+          across 700px and stopped reading as a pair. */}
+      <div className="mt-6 max-w-5xl">
+        <ProductView
+          product={product}
+          axisLabels={axisLabels}
+          specification={<Specification groups={groups} labels={axisLabels} />}
+        />
+      </div>
+
+      {product.description && (
+        <section className="mt-16 max-w-prose">
+          <h2 className="font-display text-xl [--opsz:24] [--wght:600]">About this</h2>
+          <SlabRule className="my-4" />
+          {/* Serif body copy at a measure it can hold, with the looser leading the type
+              scale already gives it. */}
+          <div className="font-display text-base leading-relaxed text-[var(--ink-muted)] [--opsz:14] [--wght:400]">
+            {product.description.split(/\n{2,}/).map((paragraph, index) => (
+              <p key={index} className="mt-4 first:mt-0">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {shelf && (
+        <section className="mt-20">
+          <VineRule />
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+            <h2 className="font-display text-2xl [--opsz:36] [--wght:600]">
+              More from {shelf.name}
+            </h2>
+            <Button asChild variant="link" size="sm">
+              <Link href={`/shop/${shelf.path}`}>See the whole shelf</Link>
+            </Button>
+          </div>
+          <Suspense fallback={<ProductGridSkeleton count={3} />}>
+            <MoreFromShelf shelfPath={shelf.path} exclude={product.slug} />
+          </Suspense>
+        </section>
+      )}
+    </main>
+  );
+}
+
+/**
+ * What it is, in the admin's own words.
+ *
+ * No attribute lookup: `displayValue` is rendered at write time and the API returns the
+ * attributes already sorted into the category's group order, so this walks a list.
+ */
+function Specification({ groups, labels }: { groups: AttributeGroup[]; labels: AxisLabels }) {
+  if (groups.length === 0) return null;
+
+  return (
+    <section className="mt-2">
+      <h2 className="font-display text-base [--opsz:18] [--wght:600]">Specification</h2>
+      <SlabRule className="my-3" />
+      <div className="flex flex-col gap-5">
+        {groups.map(({ group, attributes }) => (
+          <div key={group ?? '__ungrouped__'}>
+            {group && <h3 className="mb-1.5 text-xs text-[var(--ink-faint)]">{group}</h3>}
+            <dl className="flex flex-col">
+              {attributes.map((attribute) => (
+                <div
+                  key={attribute.key}
+                  className="flex justify-between gap-6 border-b border-[var(--rule)] py-2 text-sm last:border-b-0"
+                >
+                  {/* The definition's own label where the category endpoint supplies one;
+                      the slug, tidied, where it does not. */}
+                  <dt className="text-[var(--ink-muted)]">
+                    {labels[attribute.key]?.label ?? prettify(attribute.key)}
+                  </dt>
+                  {/* No unit appended: `displayValue` is rendered at write time and
+                      already reads "500 g". Adding `unit` again printed "500 g g". */}
+                  <dd className="text-right text-[var(--ink)]">{attribute.displayValue}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A second shelf's worth of products, streamed in after the page.
+ *
+ * Its own component so it can suspend on its own: nobody scrolls past the specification
+ * table before this resolves, so it has no business holding up the photograph and the
+ * price. Read with `softly` — a related row that fails is a page with one section fewer.
+ */
+async function MoreFromShelf({ shelfPath, exclude }: { shelfPath: string; exclude: string }) {
+  const related = await softly(
+    getProducts(new URLSearchParams({ category: shelfPath, per_page: '6' })),
+    null,
+  );
+  const siblings = (related?.data ?? []).filter((p) => p.slug !== exclude).slice(0, 3);
+  if (siblings.length === 0) return null;
+
+  /*
+    `shared` is off here. These cards are on the same page as the hero image, and two
+    elements claiming one view-transition name is a broken transition rather than a
+    nicer one.
+  */
+  return <ProductGrid products={siblings} shared={false} className="mt-8" />;
+}
+
+/**
+ * Axis value names and swatches, from the category's own attribute definitions.
+ *
+ * A variant's `axisValues` carry the admin's raw slugs — `whole-bean`, not "Whole bean" —
+ * because the grid is built from values, not labels. The category endpoint already
+ * returns each filterable attribute's options with their labels and swatch colours, and
+ * an axis attribute is normally filterable too, so the names come free. Where it is not,
+ * `ProductView` falls back to prettifying the slug.
+ */
+function buildAxisLabels(
+  filters: {
+    key: string;
+    label: string;
+    options: { value: string; label: string; swatchHex?: string }[];
+  }[],
+): AxisLabels {
+  const labels: AxisLabels = {};
+  for (const filter of filters) {
+    labels[filter.key] = {
+      label: filter.label,
+      values: Object.fromEntries(
+        filter.options.map((option) => [
+          option.value,
+          { label: option.label, ...(option.swatchHex ? { swatchHex: option.swatchHex } : {}) },
+        ]),
+      ),
+    };
+  }
+  return labels;
+}
+
+/**
+ * Keeps the API's ordering and only breaks it into headings.
+ *
+ * The attributes arrive sorted into the category's own group order, so this walks them
+ * once and starts a new section whenever the group changes — rather than bucketing by
+ * group name, which would silently re-order the table to whatever `Object.keys` felt
+ * like.
+ */
+type AttributeGroup = { group?: string; attributes: ProductAttribute[] };
+
+function groupAttributes(attributes: ProductAttribute[]): AttributeGroup[] {
+  const groups: AttributeGroup[] = [];
+  for (const attribute of attributes) {
+    const last = groups[groups.length - 1];
+    if (last && last.group === attribute.group) last.attributes.push(attribute);
+    else
+      groups.push({
+        ...(attribute.group ? { group: attribute.group } : {}),
+        attributes: [attribute],
+      });
+  }
+  return groups;
+}
+
+function Breadcrumb({ trail, title }: { trail: Category[]; title: string }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ink-faint)]">
+        <li>
+          <Link href="/shop" className="transition-colors hover:text-[var(--ink)]">
+            Shop
+          </Link>
+        </li>
+        {trail.map((entry) => (
+          <li key={entry._id} className="flex items-center gap-2">
+            <span aria-hidden>/</span>
+            <Link
+              href={`/shop/${entry.path}`}
+              className="transition-colors hover:text-[var(--ink)]"
+            >
+              {entry.name}
+            </Link>
+          </li>
+        ))}
+        <li className="flex items-center gap-2">
+          <span aria-hidden>/</span>
+          <span aria-current="page" className="text-[var(--ink-muted)]">
+            {title}
+          </span>
+        </li>
+      </ol>
+    </nav>
+  );
+}
+
+function prettify(value: string): string {
+  const spaced = value.replace(/[-_]+/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function ogImageUrl(publicId: string): string {
+  const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloud) return `/${publicId}`;
+  return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${publicId}`;
+}

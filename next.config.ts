@@ -6,6 +6,19 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  experimental: {
+    /**
+     * Enables React's <ViewTransition>, which is how the product card grows into the
+     * product page rather than the page simply being replaced.
+     *
+     * It is flagged experimental in Next 15 but the underlying API is the browser's
+     * own: without it, `startViewTransition` never wraps the App Router's navigation,
+     * so a cross-page shared element is not expressible at all. The fallback is not a
+     * broken animation, it is no animation — see src/components/motion/transition.tsx.
+     */
+    viewTransition: true,
+  },
+
   images: {
     /**
      * Image optimization is delegated to Cloudinary rather than running on Worker CPU.

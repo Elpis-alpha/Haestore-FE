@@ -321,6 +321,17 @@
     animation-delay: 0ms !important;
     transition-delay: 0ms !important;
   }
+
+  /* The `*` rule above cannot reach these: the view-transition pseudo-elements live in
+     their own tree, outside the document, so a page-wide reduced-motion rule misses the
+     one animation that moves the most — a product card growing to fill the screen.
+     Killing the animation leaves the transition itself intact; the new page simply
+     appears, which is what was asked for. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 /* ==========================================================================

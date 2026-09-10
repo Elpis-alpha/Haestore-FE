@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Karla } from 'next/font/google';
+import { SiteFooter } from '@/components/site/footer';
+import { SiteHeader } from '@/components/site/header';
 import './globals.css';
 
 /**
@@ -56,7 +58,20 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${karla.variable}`}>
-      <body className="grain min-h-screen antialiased">{children}</body>
+      <body className="grain flex min-h-screen flex-col antialiased">
+        {/* Before the header, so the first Tab on any page reaches it. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-sm focus:bg-[var(--ink)] focus:px-4 focus:py-2 focus:text-sm focus:text-[var(--surface)]"
+        >
+          Skip to content
+        </a>
+        <SiteHeader />
+        <div id="main" className="grow">
+          {children}
+        </div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }
