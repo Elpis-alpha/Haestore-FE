@@ -19,6 +19,25 @@ export type ProductAttribute = components['schemas']['ProductAttribute'];
 export type Variant = components['schemas']['Variant'];
 export type ApiError = components['schemas']['Error'];
 
-/** The shape of the degraded listing endpoint's response, cursor page included. */
+/**
+ * The generated filter panel.
+ *
+ * Nothing in this repo names a roast level or a glaze: a `Facet` describes a control the
+ * backend derived from an attribute an admin defined, and the storefront renders it from
+ * `filterUi` alone. `values[].count` is already disjunctive — see the backend's
+ * search/facets.ts — so a value with count 0 should be rendered disabled, not hidden.
+ */
+export type Facet = components['schemas']['Facet'];
+export type FacetValue = components['schemas']['FacetValue'];
+export type ListingCard = components['schemas']['ListingCard'];
+
+/**
+ * The storefront listing.
+ *
+ * `page.degraded` says MongoDB answered instead of Meilisearch: `facets` is null and no
+ * attribute filter was applied, so the panel should be hidden rather than shown inert.
+ * `ignoredFilters` names anything that was dropped and why — a filter whose attribute
+ * has since been archived, or one this category never bound.
+ */
 export type ProductListResponse =
   paths['/api/catalog/products']['get']['responses'][200]['content']['application/json'];

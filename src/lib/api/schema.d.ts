@@ -1079,17 +1079,26 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Degraded product listing. Meilisearch serves this on the storefront.
-         * @description Keyset pagination, never .skip(n). Page size defaults to 24 and is capped at 60. Returns `page.degraded: true` so a caller can tell this apart from the search path.
+         * The storefront listing: search, filters, sorting and facet counts.
+         * @description Served by Meilisearch, with a MongoDB fallback behind the same URL. `page.degraded` says which answered: when it is true, `facets` is null and attribute filters were not applied — each one comes back in `ignoredFilters` with a reason.
+         *
+         *     **Any parameter not listed here is treated as an attribute filter**, matched against the category's own AttributeDefinitions. That is how a filter an admin defined this morning works without a deploy: `?roast=medium,dark&weight_g=250-1000`. Values within one attribute are OR’d; different attributes are AND’d. An unrecognised key or value is reported in `ignoredFilters` rather than rejected, so a bookmark outlives the attribute it names.
+         *
+         *     Page size defaults to 24 and is capped at 60; depth is capped at 1000 documents.
          */
         get: {
             parameters: {
                 query?: {
                     category?: string;
-                    cursor?: string;
                     in_stock?: boolean;
+                    page?: number;
                     per_page?: number;
-                    sort?: "newest" | "price_asc" | "price_desc";
+                    /** @description Minor units. */
+                    price?: string;
+                    /** @description Full-text query. */
+                    q?: string;
+                    /** @description A whitelisted enum, never a raw sort expression. Defaults to relevance with a query and newest without one. */
+                    sort?: "relevance" | "newest" | "oldest" | "price_asc" | "price_desc" | "rating";
                 };
                 header?: never;
                 path?: never;
@@ -1097,25 +1106,40 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description A page of product cards. */
+                /** @description A page of product cards with the generated facet panel. */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["ProductCard"][];
+                            data: components["schemas"]["ListingCard"][];
+                            facets: components["schemas"]["Facet"][] | null;
+                            ignoredFilters: {
+                                key: string;
+                                reason: string;
+                            }[];
                             page: {
                                 degraded: boolean;
-                                hasMore: boolean;
-                                nextCursor: string | null;
+                                page: number;
                                 perPage: number;
+                                total: number;
+                                totalPages: number;
                             };
                         };
                     };
                 };
                 /** @description The request was malformed. */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1254,6 +1278,51 @@ export interface components {
                 requestId: string;
             };
         };
+        Facet: {
+            /** @enum {string} */
+            filterUi: "checkbox" | "swatch" | "range" | "toggle" | "select";
+            /** @example roast */
+            key: string;
+            label: string;
+            /** @description Bounds for a range control, of what is available rather than of what is selected — so a slider can always be widened again. Null for value facets. */
+            range: {
+                max: number;
+                min: number;
+            } | null;
+            /** @enum {string} */
+            type: "select" | "multiselect" | "text" | "number" | "boolean" | "color" | "dimension";
+            unit?: string;
+            values: components["schemas"]["FacetValue"][];
+        };
+        FacetValue: {
+            /** @description Computed as if this group’s own filter were absent, so a value the shopper has not ticked shows what ticking it as well would return. A declared value that currently matches nothing is 0 rather than missing. */
+            count: number;
+            label: string;
+            selected: boolean;
+            swatchHex?: string;
+            value: string;
+        };
+        ListingCard: {
+            id: string;
+            image: {
+                alt: string;
+                blurDataUrl?: string;
+                height?: number;
+                publicId: string;
+                width?: number;
+            } | null;
+            inStock: boolean;
+            priceRange: {
+                currency: string;
+                max: number;
+                min: number;
+            } | null;
+            ratingAverage: number;
+            ratingCount: number;
+            slug: string;
+            subtitle?: string;
+            title: string;
+        };
         Money: {
             /** @description Minor units. 1999 is $19.99. */
             amount: number;
@@ -1346,6 +1415,9 @@ export type SchemaCategory = components['schemas']['Category'];
 export type SchemaCategoryFilter = components['schemas']['CategoryFilter'];
 export type SchemaEffectiveAttribute = components['schemas']['EffectiveAttribute'];
 export type SchemaError = components['schemas']['Error'];
+export type SchemaFacet = components['schemas']['Facet'];
+export type SchemaFacetValue = components['schemas']['FacetValue'];
+export type SchemaListingCard = components['schemas']['ListingCard'];
 export type SchemaMoney = components['schemas']['Money'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
