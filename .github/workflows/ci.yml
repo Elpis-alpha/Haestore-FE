@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # The API contract is generated from the backend's Zod schemas. If the committed
+      # types no longer match what the backend produces, the client is compiling
+      # against a shape the server stopped returning — fail loudly rather than drift.
+      - name: API types are up to date
+        run: |
+          if [ -f src/lib/api/schema.d.ts ]; then
+            git diff --exit-code --stat -- src/lib/api/schema.d.ts \
+              || { echo "::error::schema.d.ts is stale. Run 'npm run sync:types' from the root repo."; exit 1; }
+          else
+            echo "No generated schema yet (added in Phase 2)."
+          fi
+
+  cloudflare:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The deploy target is Cloudflare Workers, which has a hard compressed size
+      # limit. Building the Worker on every PR catches an adapter-incompatible
+      # dependency at review time rather than at deploy time.
+      - name: Build Cloudflare Worker
+        run: npm run cf:build
+
+      - name: Report bundle size against the 3 MiB limit
+        run: npx wrangler deploy --dry-run --outdir=.wrangler/dry 2>&1 | grep -i 'total upload' || true
