@@ -18,6 +18,19 @@ export type ProductCard = components['schemas']['ProductCard'];
 export type ProductAttribute = components['schemas']['ProductAttribute'];
 export type Variant = components['schemas']['Variant'];
 export type ApiError = components['schemas']['Error'];
+export type User = components['schemas']['User'];
+export type Device = components['schemas']['Device'];
+
+/**
+ * The `GET /api/auth/me` body, taken from the document rather than described again.
+ *
+ * Writing this shape out by hand is how the account page first shipped reading
+ * `data.account` from a response whose field is `data.user`: it typechecked, because
+ * the type was the guess. Deriving it means a rename on the backend is a compile error
+ * here, which is the entire argument of ADR-001.
+ */
+export type MeResponse =
+  paths['/api/auth/me']['get']['responses'][200]['content']['application/json'];
 
 /**
  * The generated filter panel.

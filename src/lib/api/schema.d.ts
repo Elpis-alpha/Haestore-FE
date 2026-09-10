@@ -973,6 +973,545 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every active session on this account. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Most recently seen first. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Device"][];
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke one session.
+         * @description Scoped to this account’s own sessions, so another account’s cannot be ended.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The account. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                authAt: string;
+                                user: components["schemas"]["User"];
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set or clear the display name. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Updated. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                user: components["schemas"]["User"];
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/auth/otp/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a sign-in code.
+         * @description There is no signup and no login — this one call covers both, which is where the enumeration resistance comes from: a known address, an unknown address and a throttled request all return **202** with the same body shape. A withheld request still returns a well-formed challengeId that no challenge stands behind, so verifying against it answers "expired" exactly as a real one would.
+         *
+         *     Limits: 5 per address per hour, 20 per IP per hour, and a 60-second resend cooldown. `cooldownSeconds` is for the resend button’s countdown, not a signal about the address.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description A code has been sent, or convincingly has not. */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                challengeId: string;
+                                cooldownSeconds: number;
+                            };
+                        };
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The code could not be sent. Our fault, and the same for every address. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange a code for a session.
+         * @description The first correct code for an address **creates** the account, already verified: possession of a code mailed there is the verification.
+         *
+         *     Sets `__Host-hae_sid`. Any session presented is destroyed and a new id issued, which is the session-fixation defence. Five wrong attempts destroy the challenge, so the guess budget is 25 an hour against a space of 10⁶.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        challengeId: string;
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Signed in. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                user: components["schemas"]["User"];
+                            };
+                        };
+                    };
+                };
+                /** @description Wrong or expired. `details.attemptsRemaining` when it was wrong. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The challenge is burnt. Ask for a new code. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End this session.
+         * @description 204 whether or not there was one. Signing out cannot usefully fail, and a 401 here would be telling a signed-out person to sign in before they may sign out.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ended, and the cookie cleared. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/sign-out-everywhere": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke every other session, keeping this one. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description How many were ended. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                revoked: number;
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/step-up/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for a code to re-confirm the current session. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sent to the session’s own address. */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                challengeId: string;
+                                cooldownSeconds: number;
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/step-up/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-confirm, without replacing the session.
+         * @description Moves `authAt` and nothing else. The session id deliberately does **not** rotate: re-proving identity in the middle of a destructive action must not discard the action. The code must have been minted for this session’s own address.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        challengeId: string;
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Confirmed. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                authAt: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Wrong, expired, or minted for another account. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/categories": {
         parameters: {
             query?: never;
@@ -1241,6 +1780,15 @@ export interface components {
             type: "select" | "multiselect" | "text" | "number" | "boolean" | "color" | "dimension";
             unit?: string;
         };
+        Device: {
+            createdAt: string;
+            current: boolean;
+            /** @description A SHA-256 digest of the session id, not the session id. Safe to render and safe to send back to revoke; useless as a credential. */
+            id: string;
+            ip: string;
+            lastSeenAt: string;
+            userAgent: string;
+        };
         EffectiveAttribute: {
             defId: string;
             description?: string;
@@ -1381,6 +1929,14 @@ export interface components {
             subtitle?: string;
             title: string;
         };
+        /** @description There is no password field, and there never will be. Authentication is a code mailed to the address; see ADR-004. */
+        User: {
+            createdAt: string;
+            email: string;
+            id: string;
+            name?: string;
+            roles: string[];
+        };
         Variant: {
             _id: string;
             axisValues: {
@@ -1413,6 +1969,7 @@ export interface components {
 export type SchemaAttributeOption = components['schemas']['AttributeOption'];
 export type SchemaCategory = components['schemas']['Category'];
 export type SchemaCategoryFilter = components['schemas']['CategoryFilter'];
+export type SchemaDevice = components['schemas']['Device'];
 export type SchemaEffectiveAttribute = components['schemas']['EffectiveAttribute'];
 export type SchemaError = components['schemas']['Error'];
 export type SchemaFacet = components['schemas']['Facet'];
@@ -1422,6 +1979,7 @@ export type SchemaMoney = components['schemas']['Money'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
 export type SchemaProductCard = components['schemas']['ProductCard'];
+export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;
