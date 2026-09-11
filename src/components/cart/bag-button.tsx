@@ -93,18 +93,21 @@ export function BagButton() {
               <span className="text-sm text-[var(--ink-muted)]">Subtotal</span>
               <Price value={cart.subtotal} />
             </div>
-            <p className="text-xs text-[var(--ink-faint)]">
-              Shipping and tax are worked out at checkout.
-            </p>
+            <p className="text-xs text-[var(--ink-faint)]">No delivery charge and no tax.</p>
             {/*
-              A link to the cart page, not a Pay button. Checkout is Phase 7, and the
-              2022 app's checkout rendered a Pay button before it had a payment intent —
-              a control that looks ready and is not is the specific mistake this repo
-              keeps declining to repeat.
+              The drawer is for confirming, the cart page is for deciding — so the
+              primary action here stays "review", and checkout is the quieter second.
+              A drawer that goes straight to payment skips the one screen where a
+              re-priced line or a clamped quantity is actually legible.
             */}
             <DialogClose asChild>
               <Button asChild size="lg">
                 <Link href="/cart">Review your bag</Link>
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button asChild variant="outline">
+                <Link href="/checkout">Checkout</Link>
               </Button>
             </DialogClose>
           </footer>

@@ -2236,6 +2236,406 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/checkout/order/{orderNumber}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read one order, by session or by claim token.
+         * @description A bare order number authorises nothing and answers 404 — so it can be printed on a packing slip without becoming a credential. A guest passes ?t=<claimToken> from their confirmation email.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    t?: string;
+                };
+                header?: never;
+                path: {
+                    orderNumber: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The order. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["Order"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/checkout/paypal/capture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Capture an approved PayPal order, server-side.
+         * @description The client sends only the PayPal order id. Status, amount, currency and ownership are all read from PayPal’s response to our own call, and **all five checks must pass** — order COMPLETED, custom_id matches, capture COMPLETED, exact minor-unit amount, matching currency. The 2022 app stored a payment blob the browser posted; this route is its direct repair.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    /** @description Required. A replay with a matching body replays the stored response; one still in flight returns 409; the same key with a different body returns 422. */
+                    "Idempotency-Key": string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        paypalOrderId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Captured and marked paid. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["Order"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The payment could not be verified, or the order is already paid. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/checkout/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the provider what happened, and settle the order if it was paid.
+         * @description The return page’s path. Funnels into the same markOrderPaid the webhook calls, so a purchase completes with **zero webhooks delivered** — which is what makes the happy path testable on a laptop behind NAT. Safe to call repeatedly.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        claimToken?: string | null;
+                        orderNumber: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The order as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["Order"];
+                                reconciled: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/checkout/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn the bag into an order and start a payment.
+         * @description Re-prices every line from live catalogue data, reserves stock and inserts the order in one transaction, then creates the payment with the provider outside it. **The client sends no amounts, ever** — there is no field in the request to put one in. Works signed in or as a guest; a guest receives a one-time claimToken in the response.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    /** @description Required. A replay with a matching body replays the stored response; one still in flight returns 409; the same key with a different body returns 422. */
+                    "Idempotency-Key": string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        /** @enum {string} */
+                        provider: "stripe" | "paypal";
+                        shippingAddress: {
+                            city: string;
+                            country: string;
+                            line1: string;
+                            line2?: string;
+                            name: string;
+                            phone?: string;
+                            postalCode?: string;
+                            region?: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description The order, and what the browser needs to pay for it. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["Order"];
+                                paypal?: {
+                                    orderId: string;
+                                };
+                                stripe?: {
+                                    clientSecret: string | null;
+                                };
+                            };
+                        };
+                    };
+                };
+                /** @description The request was malformed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description There is no bag to check out. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description A line is out of stock, or the key is still in flight. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in shopper’s order history. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Newest first. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Order"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderNumber}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the signed-in shopper’s own orders. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderNumber: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The order. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["Order"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/wishlist": {
         parameters: {
             query?: never;
@@ -2579,6 +2979,48 @@ export interface components {
             amount: number;
             currency: string;
         };
+        Order: {
+            /** @description Returned exactly once, to a guest, in the response that created the order. Only its HMAC is stored, so it can never be read back — keep it or lose access. */
+            claimToken?: string;
+            currency: string;
+            email: string;
+            id: string;
+            itemCount: number;
+            lines: components["schemas"]["OrderLine"][];
+            /** @example HAE-8KDM2P4Q */
+            orderNumber: string;
+            paidAt: string | null;
+            payment: {
+                paid: boolean;
+                /** @enum {string} */
+                provider: "stripe" | "paypal";
+            };
+            placedAt: string;
+            shippingAddress: components["schemas"]["ShippingAddress"];
+            /** @enum {string} */
+            status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+            /** @description grandTotal equals subtotal: this shop charges no delivery and no tax. The breakdown exists so that every amount check reads grandTotal specifically, and a shipping line added later changes one function rather than five. */
+            totals: {
+                grandTotal: components["schemas"]["Money"];
+                subtotal: components["schemas"]["Money"];
+            };
+        };
+        OrderLine: {
+            axisValues: {
+                key: string;
+                value: string;
+            }[];
+            imagePublicId?: string;
+            lineKey: string;
+            lineTotal: components["schemas"]["Money"] & unknown;
+            productId: string;
+            quantity: number;
+            sku: string;
+            slug: string;
+            title: string;
+            unitPrice: components["schemas"]["Money"] & unknown;
+            variantId: string;
+        };
         Product: components["schemas"]["ProductCard"] & {
             attributes: components["schemas"]["ProductAttribute"][];
             category: string;
@@ -2631,6 +3073,16 @@ export interface components {
             slug: string;
             subtitle?: string;
             title: string;
+        };
+        ShippingAddress: {
+            city: string;
+            country: string;
+            line1: string;
+            line2?: string;
+            name: string;
+            phone?: string;
+            postalCode?: string;
+            region?: string;
         };
         /** @description There is no password field, and there never will be. Authentication is a code mailed to the address; see ADR-004. */
         User: {
@@ -2699,9 +3151,12 @@ export type SchemaLineChange = components['schemas']['LineChange'];
 export type SchemaListingCard = components['schemas']['ListingCard'];
 export type SchemaMergeReport = components['schemas']['MergeReport'];
 export type SchemaMoney = components['schemas']['Money'];
+export type SchemaOrder = components['schemas']['Order'];
+export type SchemaOrderLine = components['schemas']['OrderLine'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
 export type SchemaProductCard = components['schemas']['ProductCard'];
+export type SchemaShippingAddress = components['schemas']['ShippingAddress'];
 export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
 export type SchemaWishlistEntry = components['schemas']['WishlistEntry'];

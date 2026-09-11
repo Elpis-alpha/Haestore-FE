@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Price } from '@/components/ui/price';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SlabRule } from '@/components/motifs/rule';
+import { isBlocking } from '@/lib/cart/types';
 import { useCart } from './cart-provider';
 import { CartLineRow } from './cart-line-row';
 import { MergeReportPanel } from './merge-report';
@@ -26,6 +27,13 @@ export function CartPage() {
 
   const settling = loading && cart.lines.length === 0 && cart.savedForLater.length === 0;
   const empty = cart.lines.length === 0;
+
+  /**
+   * A line the checkout transaction would refuse. Phase 6 shipped `isBlocking` with
+   * nothing consuming it and left a note saying so; this and the checkout form are the
+   * two consumers.
+   */
+  const blocked = cart.lines.some((line) => line.changes.some(isBlocking));
 
   /**
    * The report sits outside the loading branch on purpose.
@@ -83,9 +91,14 @@ export function CartPage() {
                   <Price value={cart.subtotal} />
                 </dd>
               </div>
+              {/*
+                Stated as a fact, not deferred. This shop charges neither, and "worked
+                out at checkout" — which stood here while checkout did not exist — reads
+                as a number about to be added.
+              */}
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-[var(--ink-muted)]">Shipping</dt>
-                <dd className="text-[var(--ink-faint)]">Worked out at checkout</dd>
+                <dt className="text-[var(--ink-muted)]">Delivery and tax</dt>
+                <dd className="text-[var(--ink-faint)]">None on this order</dd>
               </div>
             </dl>
 
@@ -97,14 +110,18 @@ export function CartPage() {
             )}
 
             {/*
-              Checkout is Phase 7. The button is absent rather than disabled, exactly as
-              add-to-bag was absent in Phase 4 — the 2022 app rendered a Pay button before
-              it had a payment intent, and both gateways advanced to "Congratulations" on
-              error. Nothing here will pretend to take money until something can.
+              The button that was deliberately absent through Phase 6, now that there is
+              something behind it. It is disabled only when the server would refuse the
+              checkout anyway — a line that has sold out or been clamped — so a shopper
+              is told here rather than after filling in an address.
             */}
-            <p className="mt-5 text-xs text-[var(--ink-faint)]">
-              Checkout opens in the next release. Your bag is saved.
-            </p>
+            <Button asChild={!blocked} size="lg" className="mt-5 w-full" disabled={blocked}>
+              {blocked ? (
+                <span>Fix your bag to continue</span>
+              ) : (
+                <Link href="/checkout">Checkout</Link>
+              )}
+            </Button>
           </aside>
         </div>
       )}

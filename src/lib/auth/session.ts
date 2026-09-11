@@ -5,6 +5,11 @@ import { notFound, redirect } from 'next/navigation';
 import { SESSION_COOKIE } from './cookie-name';
 import type { Device, MeResponse, User } from '@/lib/api/types';
 import type { WishlistEntry } from '@/lib/cart/types';
+import type { Order } from '@/lib/checkout/types';
+import type { paths } from '@/lib/api/schema';
+
+type OrderListResponse =
+  paths['/api/orders']['get']['responses'][200]['content']['application/json'];
 
 /**
  * Reading the session from a server component.
@@ -80,6 +85,35 @@ export async function getDevices(): Promise<Device[]> {
 
 export async function getAccount(): Promise<Account | null> {
   return (await getSession())?.account ?? null;
+}
+
+/**
+ * The signed-in shopper's order history.
+ *
+ * Read on the server, with the session cookie forwarded, so the page renders complete
+ * rather than flashing a skeleton and filling in. An order list is stable enough to be
+ * worth rendering properly — unlike the cart, which changes under the shopper's hands.
+ */
+export async function getOrders(page = 1): Promise<{ orders: Order[]; totalPages: number }> {
+  const jar = await cookies();
+  const sid = jar.get(SESSION_COOKIE)?.value;
+  if (!sid) return { orders: [], totalPages: 1 };
+
+  const response = await fetch(`${API_ORIGIN}/api/orders?page=${page}`, {
+    headers: { accept: 'application/json', cookie: `${SESSION_COOKIE}=${sid}` },
+    cache: 'no-store',
+  });
+  if (!response.ok) return { orders: [], totalPages: 1 };
+
+  const body = (await response.json()) as OrderListResponse;
+  return { orders: body.data, totalPages: body.page.totalPages };
+}
+
+export async function getOrder(orderNumber: string): Promise<Order | null> {
+  return (
+    (await authedGet<{ order: Order }>(`/api/orders/${encodeURIComponent(orderNumber)}`))?.order ??
+    null
+  );
 }
 
 /**
