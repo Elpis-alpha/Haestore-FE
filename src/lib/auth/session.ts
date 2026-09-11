@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { SESSION_COOKIE } from './cookie-name';
 import type { Device, MeResponse, User } from '@/lib/api/types';
+import type { WishlistEntry } from '@/lib/cart/types';
 
 /**
  * Reading the session from a server component.
@@ -104,4 +105,16 @@ export async function requireAdmin(returnTo: string): Promise<Session> {
   const session = await requireSession(returnTo);
   if (!session.account.roles.includes('admin')) notFound();
   return session;
+}
+
+/**
+ * The wishlist, read on the server.
+ *
+ * Unlike the cart — which is fetched from the browser because a guest has one and the
+ * root layout must stay static — the wishlist only exists for a signed-in person on a
+ * page that is already dynamic and already `noindex`. Rendering it on the server is one
+ * fewer round trip and no loading state.
+ */
+export async function getWishlist(): Promise<WishlistEntry[]> {
+  return (await authedGet<WishlistEntry[]>('/api/wishlist')) ?? [];
 }

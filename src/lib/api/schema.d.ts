@@ -1249,7 +1249,9 @@ export interface paths {
          * Exchange a code for a session.
          * @description The first correct code for an address **creates** the account, already verified: possession of a code mailed there is the verification.
          *
-         *     Sets `__Host-hae_sid`. Any session presented is destroyed and a new id issued, which is the session-fixation defence. Five wrong attempts destroy the challenge, so the guess budget is 25 an hour against a space of 10⁶.
+         *     Sets `__Host-hae_sid`. Any session presented is destroyed and a new id issued, which is the session-fixation defence — and the rotation the guest-to-user upgrade needs. Five wrong attempts destroy the challenge, so the guess budget is 25 an hour against a space of 10⁶.
+         *
+         *     Any guest cart named by `__Host-hae_cid` is merged into the account here, and the cookie is cleared. A merge that fails does **not** fail the sign-in: the guest cart stays unclaimed and the next attempt picks it up.
          */
         post: {
             parameters: {
@@ -1276,6 +1278,8 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
+                                /** @description True when a guest cart was folded in. Fetch the report itself from /api/cart/merge-report on the destination page. */
+                                mergeReport: boolean;
                                 user: components["schemas"]["User"];
                             };
                         };
@@ -1497,6 +1501,493 @@ export interface paths {
                 };
                 /** @description No session. */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The bag, re-priced against live catalogue data.
+         * @description Works signed in or signed out. No cart is an empty cart, not a 404, and reading never creates one — a guest cookie is issued only by the first add-to-cart.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The bag. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Empty the bag.
+         * @description Saved-for-later survives, because setting something aside was a separate decision.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The empty bag. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add to the bag.
+         * @description The body carries a product, a variant and a quantity, and **no price of any kind**. Every figure is read from the catalogue on the server. Adding a line that is already there raises its quantity rather than making a second row. Sets the guest cookie if there is no session and no cookie yet.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        productId: string;
+                        /** @default 1 */
+                        quantity?: number;
+                        variantId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The whole bag, re-priced. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Sold out, or the bag is full. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/lines/{lineKey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a line. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lineKey: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The whole bag, re-priced. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+                /** @description The request was malformed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Set a line quantity.
+         * @description Zero removes the line, so a stepper decrementing from 1 needs no second route.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lineKey: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        quantity: number | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description The whole bag, re-priced. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+                /** @description The request was malformed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/cart/lines/{lineKey}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a line aside, or put it back. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lineKey: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        to: "saved" | "cart";
+                    };
+                };
+            };
+            responses: {
+                /** @description The whole bag, re-priced. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+                /** @description The request was malformed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/merge-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the last sign-in did to the bag.
+         * @description Null when there is nothing to report. Read by the page the shopper lands on rather than returned from the verify call, whose response the navigation replaces.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The report, or null. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["MergeReport"] & (Record<string, never> | null);
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/merge-report/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark the merge report as seen. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dismissed. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/merge-report/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Put the bag back the way it was before the merge.
+         * @description Restores the account’s own lines, which does discard what the guest cart contributed — that is what undoing a merge is. Available for seven days, once.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The restored bag. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Cart"];
+                        };
+                    };
+                };
+                /** @description That merge is too old to undo. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Already undone. */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1745,6 +2236,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/wishlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The wishlist.
+         * @description Signed in only, on purpose: a wishlist promises to remember across devices and months, and a guest cookie can keep neither promise.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The list. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["WishlistEntry"][];
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add a wish.
+         * @description Idempotent: wishing for the same thing twice is one wish.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        productId: string;
+                        variantId?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description The list. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["WishlistEntry"][];
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The wishlist is full. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        /**
+         * Remove a wish.
+         * @description By body, not by path: a wish is a product plus an *optional* variant, and null is a meaningful value there rather than an omission.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        productId: string;
+                        variantId?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description The list. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["WishlistEntry"][];
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1754,6 +2395,44 @@ export interface components {
             order: number;
             swatchHex?: string;
             value: string;
+        };
+        Cart: {
+            currency: string;
+            /** @description Pieces, not rows. What the bag badge shows. */
+            itemCount: number;
+            lines: components["schemas"]["CartLine"][];
+            /** @description Some line changed under the shopper. Show the notices before checkout. */
+            needsAttention: boolean;
+            /** @description Set aside on purpose or moved here when it sold out. Not in the totals. */
+            savedForLater: components["schemas"]["CartLine"][];
+            subtotal: components["schemas"]["Money"];
+        };
+        CartLine: {
+            addedAt: string;
+            available: number | null;
+            axisValues: {
+                key: string;
+                value: string;
+            }[];
+            backorderable: boolean;
+            changes: components["schemas"]["LineChange"][];
+            imagePublicId?: string;
+            /** @description `<productId>_<variantId>`. Derived, not generated, so two carts that never met agree on what the same line is. */
+            lineKey: string;
+            lineTotal: components["schemas"]["Money"] & unknown;
+            lowStockThreshold: number;
+            /** @description The ceiling for the stepper. Zero means the line cannot be bought. */
+            maxQuantity: number;
+            productId: string;
+            /** @description What the shopper asked for. */
+            quantity: number;
+            /** @description What can actually be bought right now. Lower than `quantity` means the line carries a `clamped` or out-of-stock change; the totals use this one. */
+            sellableQuantity: number;
+            sku: string;
+            slug: string;
+            title: string;
+            unitPrice: components["schemas"]["Money"];
+            variantId: string;
         };
         Category: {
             _id: string;
@@ -1850,6 +2529,16 @@ export interface components {
             swatchHex?: string;
             value: string;
         };
+        /** @description One thing that happened to a line. Which of from/to/reason are present depends on `kind`; a line with no changes carries an empty array. */
+        LineChange: {
+            available?: number;
+            from?: number | components["schemas"]["Money"];
+            /** @enum {string} */
+            kind: "added" | "quantity_raised" | "price_changed" | "clamped" | "saved_for_later" | "dropped";
+            /** @enum {string} */
+            reason?: "out_of_stock" | "unavailable" | "currency";
+            to?: number | components["schemas"]["Money"];
+        };
         ListingCard: {
             id: string;
             image: {
@@ -1870,6 +2559,20 @@ export interface components {
             slug: string;
             subtitle?: string;
             title: string;
+        };
+        /** @description What signing in did to the bag. A quantity collision takes MAX, never SUM — so a row reading `quantity_raised 2 → 3` is the guest cart winning, not a sum. */
+        MergeReport: {
+            cart: components["schemas"]["Cart"];
+            rows: {
+                axisValues: {
+                    key: string;
+                    value: string;
+                }[];
+                changes: components["schemas"]["LineChange"][];
+                lineKey: string;
+                title: string;
+            }[];
+            undoableUntil: string | null;
         };
         Money: {
             /** @description Minor units. 1999 is $19.99. */
@@ -1959,6 +2662,22 @@ export interface components {
             };
             weightGrams?: number;
         };
+        /** @description Nothing about price or stock is stored on a wish — it is read live, because a wishlist is looked at weeks after it is written. */
+        WishlistEntry: {
+            addedAt: string;
+            /** @description Whether it can still be bought at all, which is not the same as in stock. */
+            available: boolean;
+            imagePublicId?: string;
+            inStock: boolean;
+            /** @description Present when a variant was chosen, so the item can go straight to the bag. */
+            lineKey: string | null;
+            price: components["schemas"]["Money"] & (Record<string, never> | null);
+            priceTo: components["schemas"]["Money"] & (Record<string, never> | null);
+            productId: string;
+            slug: string;
+            title: string;
+            variantId: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -1967,6 +2686,8 @@ export interface components {
     pathItems: never;
 }
 export type SchemaAttributeOption = components['schemas']['AttributeOption'];
+export type SchemaCart = components['schemas']['Cart'];
+export type SchemaCartLine = components['schemas']['CartLine'];
 export type SchemaCategory = components['schemas']['Category'];
 export type SchemaCategoryFilter = components['schemas']['CategoryFilter'];
 export type SchemaDevice = components['schemas']['Device'];
@@ -1974,12 +2695,15 @@ export type SchemaEffectiveAttribute = components['schemas']['EffectiveAttribute
 export type SchemaError = components['schemas']['Error'];
 export type SchemaFacet = components['schemas']['Facet'];
 export type SchemaFacetValue = components['schemas']['FacetValue'];
+export type SchemaLineChange = components['schemas']['LineChange'];
 export type SchemaListingCard = components['schemas']['ListingCard'];
+export type SchemaMergeReport = components['schemas']['MergeReport'];
 export type SchemaMoney = components['schemas']['Money'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
 export type SchemaProductCard = components['schemas']['ProductCard'];
 export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
+export type SchemaWishlistEntry = components['schemas']['WishlistEntry'];
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;

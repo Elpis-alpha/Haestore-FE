@@ -10,6 +10,8 @@ import { Rating } from '@/components/ui/rating';
 import { ArchFrame } from '@/components/motifs/arch';
 import { Leaf } from '@/components/motifs/leaf';
 import { SharedElement, productTransitionName } from '@/components/motion/shared-element';
+import { AddToBag } from '@/components/cart/add-to-bag';
+import { WishButton } from '@/components/cart/wish-button';
 
 /**
  * The product, and the one interaction on the read path: choosing a variant.
@@ -19,10 +21,13 @@ import { SharedElement, productTransitionName } from '@/components/motion/shared
  * picking "1 kg" could change the price, the stock line and the photograph — three
  * subscribers to a value with exactly one owner.
  *
- * There is no add-to-bag control here. Phase 4 is the read path, and the bag arrives in
- * Phase 6 with a cart behind it. A disabled button in its place would be the same
- * mistake as the 2022 app's checkout, which rendered a Pay button before it had a
- * payment intent.
+ * The add-to-bag control arrived in Phase 6, with a cart behind it. Phase 4 deliberately
+ * shipped this page with nothing in its place — not even a disabled button — for the
+ * reason the 2022 app's checkout demonstrates: it rendered a Pay button before it had a
+ * payment intent, and a control that looks ready and is not is worse than an absence.
+ *
+ * It sits directly under the axis pickers because the selected variant is what it adds,
+ * and the two must never be separated by anything a shopper could read as a divider.
  */
 
 export type AxisLabels = Record<
@@ -187,6 +192,27 @@ export function ProductView({
             ))}
           </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <AddToBag
+            productId={product._id}
+            variantId={variant?._id ?? null}
+            available={variant?.stock.available ?? 0}
+            backorderable={variant?.stock.backorderable ?? false}
+            maxQuantity={
+              variant
+                ? variant.stock.backorderable
+                  ? 99
+                  : Math.min(99, variant.stock.available)
+                : 0
+            }
+          />
+          <WishButton
+            productId={product._id}
+            variantId={variant?._id ?? null}
+            returnTo={`/product/${product.slug}`}
+          />
+        </div>
 
         {variant && (
           <p className="text-xs text-[var(--ink-faint)]">

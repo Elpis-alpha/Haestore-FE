@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Fraunces, Karla } from 'next/font/google';
 import { SiteFooter } from '@/components/site/footer';
 import { SiteHeader } from '@/components/site/header';
+import { CartProvider } from '@/components/cart/cart-provider';
 import './globals.css';
 
 /**
@@ -66,11 +67,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <SiteHeader />
-        <div id="main" className="grow">
-          {children}
-        </div>
-        <SiteFooter />
+        {/*
+          The bag's state wraps the whole site because the header shows it and every page
+          can add to it. It is a client component and it reads **no cookies on the
+          server** — `cookies()` in a layout opts every route beneath it into dynamic
+          rendering, and this layout wraps `/`, which the Phase 5 verification confirmed
+          is still `○ Static`. The badge count comes from a readable cookie in the
+          browser instead. See lib/cart/client.ts.
+        */}
+        <CartProvider>
+          <SiteHeader />
+          <div id="main" className="grow">
+            {children}
+          </div>
+          <SiteFooter />
+        </CartProvider>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { Wordmark } from '@/components/motifs/wordmark';
 import { MobileNav } from './mobile-nav';
 import { PrimaryNav } from './primary-nav';
 import { SearchField } from './search-field';
+import { BagButton } from '@/components/cart/bag-button';
 
 /**
  * The shop front.
@@ -14,19 +15,19 @@ import { SearchField } from './search-field';
  * in the storefront that is allowed to fail quietly, because it is the one whose absence
  * costs a shopper nothing they came for.
  *
- * There is no cart control yet, and deliberately no disabled placeholder for one. Phase 4
- * builds the read path; the bag arrives in Phase 6 with something behind it. A button
- * that does nothing teaches people the buttons do nothing.
+ * **Neither the bag nor the account link reads the session**, and that turned out to be
+ * the right answer for both. `cookies()` in a layout opts every route beneath it into
+ * dynamic rendering, and this layout wraps the whole site — so a header that resolved
+ * who you are would cost the home page and every shelf their cacheability to render one
+ * word and one number.
  *
- * **The account link does not read the session, on purpose.** `cookies()` in a layout
- * opts every route beneath it into dynamic rendering, and this layout wraps the whole
- * site — so a header that showed "Signed in as…" would cost the home page and every
- * shelf their cacheability to render one word. The link says "Account" either way and
- * `/account` sorts it out: signed in, you get the page; signed out, it redirects to
- * sign-in and brings you back. One click, correct in both states.
+ * Phase 5 expected Phase 6 to change that calculus, on the grounds that a bag needs
+ * per-request state. It does not: the API writes the count to a cookie script can read,
+ * so `<BagButton>` renders a correct badge in a statically prerendered header and fetches
+ * the lines only when the drawer opens. `/` stays `○ Static`. See lib/cart/client.ts.
  *
- * Phase 6 changes this calculus: a bag needs per-request state in the header regardless,
- * and that is the moment to revisit it — not before.
+ * The account link works the same way: it says "Account" in both states and `/account`
+ * sorts it out — signed in you get the page, signed out it redirects and brings you back.
  */
 export async function SiteHeader() {
   const categories = await softly(getCategories(), []);
@@ -55,13 +56,16 @@ export async function SiteHeader() {
         */}
         <SearchField className="ml-auto hidden w-full max-w-56 md:block" />
 
-        <Link
-          href="/account"
-          className="ml-auto shrink-0 rounded-xs p-2 md:ml-0 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
-        >
-          <AccountGlyph />
-          <span className="sr-only">Account</span>
-        </Link>
+        <div className="ml-auto flex shrink-0 items-center md:ml-0">
+          <Link
+            href="/account"
+            className="rounded-xs p-2 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+          >
+            <AccountGlyph />
+            <span className="sr-only">Account</span>
+          </Link>
+          <BagButton />
+        </div>
       </div>
     </header>
   );

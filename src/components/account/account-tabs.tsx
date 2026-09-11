@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 
 const tabs = [
   { href: '/account', label: 'Account' },
+  { href: '/account/wishlist', label: 'Wishlist' },
   { href: '/account/devices', label: 'Signed-in devices' },
 ];
 
