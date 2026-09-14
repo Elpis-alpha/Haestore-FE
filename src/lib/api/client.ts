@@ -1,4 +1,5 @@
 import 'server-only';
+import type { paths } from './schema';
 import type { Category, CategoryFilter, Product, ProductListResponse } from './types';
 
 /**
@@ -162,4 +163,22 @@ export async function softly<T>(read: Promise<T>, fallback: T): Promise<T> {
     console.error('[catalog] optional read failed', error);
     return fallback;
   }
+}
+
+export type StorefrontPage =
+  paths['/api/storefront/{handle}']['get']['responses'][200]['content']['application/json']['data'];
+
+/**
+ * A composed page — the published version, with its products and shelves resolved.
+ *
+ * Tagged so publishing can revalidate it: the composer calls a server action that
+ * revalidates `storefront`, which is what lets a publish show within seconds on a page that
+ * otherwise holds for five minutes.
+ */
+export async function getStorefront(handle: 'home'): Promise<StorefrontPage> {
+  const body = await apiGet<{ data: StorefrontPage }>(`/api/storefront/${handle}`, {
+    revalidate: 300,
+    tags: ['storefront'],
+  });
+  return body.data;
 }

@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every admin mutation that succeeded, newest first. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    targetId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of the log. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AuditEntry"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog/attributes": {
         parameters: {
             query?: never;
@@ -14,7 +62,9 @@ export interface paths {
         /** Every attribute definition. */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    includeArchived?: "true" | "false";
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -28,7 +78,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: unknown[];
+                            data: components["schemas"]["AttributeDefinition"][];
                         };
                     };
                 };
@@ -107,7 +157,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data?: unknown;
+                            data: components["schemas"]["AttributeDefinition"];
                         };
                     };
                 };
@@ -144,7 +194,40 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** One attribute definition. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The definition. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AttributeDefinition"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -164,19 +247,12 @@ export interface paths {
                 content: {
                     "application/json": {
                         description?: string;
-                        /**
-                         * @default checkbox
-                         * @enum {string}
-                         */
+                        /** @enum {string} */
                         filterUi?: "checkbox" | "swatch" | "range" | "toggle" | "select";
-                        /** @default true */
                         isFilterable?: boolean;
-                        /** @default false */
                         isSearchable?: boolean;
-                        /** @default false */
                         isVariantAxis?: boolean;
                         label?: string;
-                        /** @default [] */
                         options?: {
                             label: string;
                             /** @default 0 */
@@ -185,11 +261,6 @@ export interface paths {
                             value: string;
                         }[];
                         unit?: string;
-                        /**
-                         * @default {
-                         *       "requiredByDefault": false
-                         *     }
-                         */
                         validation?: {
                             max?: number;
                             maxLength?: number;
@@ -209,7 +280,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data?: unknown;
+                            data: components["schemas"]["AttributeDefinition"];
                         };
                     };
                 };
@@ -226,7 +297,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/api/admin/catalog/categories": {
+    "/api/admin/catalog/attributes/{id}/archive": {
         parameters: {
             query?: never;
             header?: never;
@@ -234,6 +305,169 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        /** Retire an attribute from forms and filters. Stored values stay renderable. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The definition. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AttributeDefinition"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/attributes/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bring an archived attribute back. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The definition. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AttributeDefinition"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/attributes/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many categories bind, and how many products carry, each attribute key. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Usage by key. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                [key: string]: {
+                                    categories: number;
+                                    products: number;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The whole category tree, hidden branches included. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Root nodes, each with children. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminCategory"][];
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         /** Create a category. */
         post: {
@@ -275,7 +509,32 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Category"];
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
                         };
                     };
                 };
@@ -306,7 +565,57 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an empty category. Requires step-up.
+         * @description Refused with 409 while the category has sub-categories or products, which are named in the message. Behind step-up because it cannot be undone.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflicts with something that already exists. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         /** Rename or reconfigure a category. A slug change cascades to descendant paths. */
@@ -325,18 +634,11 @@ export interface paths {
                         description?: string;
                         imagePublicId?: string;
                         name?: string;
-                        /** @default 0 */
                         order?: number;
                         slug?: string;
-                        /**
-                         * @default active
-                         * @enum {string}
-                         */
+                        /** @enum {string} */
                         status?: "active" | "hidden";
-                        /**
-                         * @default lenient
-                         * @enum {string}
-                         */
+                        /** @enum {string} */
                         validationMode?: "lenient" | "strict";
                     };
                 };
@@ -349,7 +651,32 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Category"];
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
                         };
                     };
                 };
@@ -405,7 +732,32 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Category"];
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
                         };
                     };
                 };
@@ -421,6 +773,81 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/categories/{id}/attributes/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unbind an attribute from a category. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Unbound. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -455,13 +882,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: {
-                                attributes: components["schemas"]["EffectiveAttribute"][];
-                                categoryId: string;
-                                categoryPath: string;
-                                /** @enum {string} */
-                                validationMode: "lenient" | "strict";
-                            };
+                            data: components["schemas"]["EffectiveAttributeSet"];
                         };
                     };
                 };
@@ -521,7 +942,32 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Category"];
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
                         };
                     };
                 };
@@ -575,7 +1021,32 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Category"];
+                            data: {
+                                _id: string;
+                                /** @description Root-first, including self. */
+                                ancestors: string[];
+                                attributeBindings: {
+                                    defId: string;
+                                    group?: string;
+                                    key: string;
+                                    order: number;
+                                    required: boolean;
+                                }[];
+                                depth: number;
+                                description?: string;
+                                imagePublicId?: string;
+                                name: string;
+                                order: number;
+                                parent: string | null;
+                                /** @example coffee-tea/beans */
+                                path: string;
+                                slug: string;
+                                /** @enum {string} */
+                                status: "active" | "hidden";
+                                suppressedKeys: string[];
+                                /** @enum {string} */
+                                validationMode: "lenient" | "strict";
+                            };
                         };
                     };
                 };
@@ -604,7 +1075,44 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Every product, any status, from MongoDB. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description A branch: everything beneath it. */
+                    categoryId?: string;
+                    needsAttention?: "true" | "false";
+                    page?: number;
+                    perPage?: number;
+                    /** @description A title fragment or an exact SKU. */
+                    q?: string;
+                    status?: "draft" | "active" | "archived";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Most recently updated first. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminProductSummary"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         /**
          * Create a product.
@@ -700,7 +1208,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Product"];
+                            data: components["schemas"]["AdminProduct"];
                         };
                     };
                 };
@@ -737,10 +1245,81 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** One product, whole, with its validation issues. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The product. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminProduct"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
-        delete?: never;
+        /** Archive a product. Requires step-up. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Archived and removed from the index. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         /** Edit a product. */
@@ -756,12 +1335,10 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @default {} */
                         attributes?: {
                             [key: string]: unknown;
                         };
                         description?: string;
-                        /** @default [] */
                         images?: {
                             /** @default  */
                             alt?: string;
@@ -773,16 +1350,11 @@ export interface paths {
                             width?: number;
                         }[];
                         slug?: string;
-                        /**
-                         * @default draft
-                         * @enum {string}
-                         */
+                        /** @enum {string} */
                         status?: "draft" | "active" | "archived";
                         subtitle?: string;
                         title?: string;
-                        /** @default [] */
                         variantAxes?: string[];
-                        /** @default [] */
                         variants?: {
                             /** @default [] */
                             axisValues?: {
@@ -835,7 +1407,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Product"];
+                            data: components["schemas"]["AdminProduct"];
                         };
                     };
                 };
@@ -886,7 +1458,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: components["schemas"]["Product"];
+                            data: components["schemas"]["AdminProduct"];
                         };
                     };
                 };
@@ -951,6 +1523,14 @@ export interface paths {
                         "application/json": {
                             data: {
                                 count: number;
+                                product?: components["schemas"]["AdminProduct"];
+                                variants?: {
+                                    axisValues: {
+                                        key: string;
+                                        value: string;
+                                    }[];
+                                    sku: string;
+                                }[];
                                 warn: boolean;
                             };
                         };
@@ -958,6 +1538,1115 @@ export interface paths {
                 };
                 /** @description The request was malformed. */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everyone who has signed in, newest first. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    /** @description The start of an email address. */
+                    q?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of customers. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["CustomerSummary"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/customers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One customer. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The customer. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["CustomerDetail"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/customers/{id}/revoke-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign a customer out of every device, now. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sessions ended. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                revoked: number;
+                            };
+                        };
+                    };
+                };
+                /** @description That is the caller’s own account. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/customers/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Grant or remove the admin role. Requires step-up.
+         * @description Either direction ends all of the person’s sessions: for a grant, that is the session rotation a privilege change requires, performed on a browser the admin does not hold.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        admin: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description The customer now. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                changed: boolean;
+                                customer: components["schemas"]["CustomerDetail"];
+                            };
+                        };
+                    };
+                };
+                /** @description An admin cannot change their own role. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The address is on ADMIN_EMAILS and would be re-granted. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What needs a person today. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The queues. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Dashboard"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every order, newest first. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    /** @description An order number, or the start of an email. */
+                    q?: string;
+                    status?: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of orders. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminOrderSummary"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One order, with its payment record, history and available actions. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The order as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["AdminOrder"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel an unpaid order and return its stock. Requires step-up.
+         * @description Unpaid orders only. A paid order that should not ship is refunded instead.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The order as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["AdminOrder"];
+                            };
+                        };
+                    };
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The order is not in a state this action applies to. `details.status` names the state it is in. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the provider what happened, and settle the order if it was paid.
+         * @description The same reconcileOrderWithProvider the return page uses, funnelling into the same markOrderPaid. Safe to press any number of times.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description What the provider said, and the order afterwards. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["AdminOrder"];
+                                /** @enum {string} */
+                                outcome: "paid" | "already_settled" | "not_found" | "amount_mismatch" | "nothing_to_do";
+                                reason: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The provider did not answer. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a refund issued in the provider’s dashboard. Requires step-up.
+         * @description **This does not move money.** It records that the money was returned, with a required note, and puts any still-held stock back on the shelf.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        note: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The order as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["AdminOrder"];
+                            };
+                        };
+                    };
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The order is not in a state this action applies to. `details.status` names the state it is in. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move an order forward: processing, shipped, delivered.
+         * @description Shipping consumes the reserved stock in the same transaction as the status change, and is claimed in the same write, so two presses ship once. There is no paid → shipped edge.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        note?: string;
+                        /** @enum {string} */
+                        to: "processing" | "shipped" | "delivered";
+                    };
+                };
+            };
+            responses: {
+                /** @description The order as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                order: components["schemas"]["AdminOrder"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The order is not in a state this action applies to. `details.status` names the state it is in. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The composer’s state: what is live, the draft, and the history. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The page’s versions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                draft: components["schemas"]["StorefrontLayout"] & (Record<string, never> | null);
+                                /** @enum {string} */
+                                handle: "home";
+                                published: components["schemas"]["StorefrontLayout"] & (Record<string, never> | null);
+                                versions: components["schemas"]["StorefrontVersion"][];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save the draft against the revision it was loaded at. */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        note?: string;
+                        revision: number;
+                        sections: components["schemas"]["StorefrontSection"][];
+                    };
+                };
+            };
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StorefrontLayout"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Saved by someone else since; `details.revision` is the current one. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        /** Open the draft, creating it from what is live if there is none. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StorefrontLayout"];
+                        };
+                    };
+                };
+            };
+        };
+        /** Throw the draft away. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Discarded. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}/draft/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish the draft. Requires step-up.
+         * @description Retires the live version and promotes the draft in one transaction. A second published version per handle is refused by a unique index, so concurrent publishes produce one.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        revision: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StorefrontLayout"];
+                        };
+                    };
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The draft changed or was published since it was loaded. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One version, whole. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                    version: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StorefrontLayout"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}/versions/{version}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A version resolved exactly as the storefront would render it, with warnings. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                    version: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The resolved page. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                sections: components["schemas"]["ResolvedSection"][];
+                                version: components["schemas"]["StorefrontLayout"];
+                                warnings: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/storefront/{handle}/versions/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an earlier version back on the page. This is rollback. Requires step-up. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                    version: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StorefrontLayout"];
+                        };
+                    };
+                };
+                /** @description STEP_UP_REQUIRED — the session is valid, but its last verified code is more than 12 hours old. Verify a code through /api/auth/step-up and retry; the session survives. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflicts with something that already exists. */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2636,6 +4325,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/storefront/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The composed page, as published.
+         * @description Only ever the published version — or, before anything is published, the built-in default (version null). Every product and category reference is resolved as it stands now; a reference that has gone stale is left out rather than failing the page.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    handle: "home";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The page. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                handle: "home";
+                                publishedAt: string | null;
+                                sections: components["schemas"]["ResolvedSection"][];
+                                version: number | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/wishlist": {
         parameters: {
             query?: never;
@@ -2790,11 +4537,196 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminCategory: components["schemas"]["Category"] & {
+            attributeBindings: {
+                defId: string;
+                group?: string;
+                key: string;
+                order: number;
+                required: boolean;
+            }[];
+            /** @description AdminCategory nodes, recursively. Described loosely because the document format cannot express the recursion without a reference cycle. */
+            children: {
+                [key: string]: unknown;
+            }[];
+            /** @enum {string} */
+            status: "active" | "hidden";
+            suppressedKeys: string[];
+            /** @enum {string} */
+            validationMode: "lenient" | "strict";
+        };
+        AdminOrder: {
+            /** @description What may be done to this order now, derived from the status machine on the server. Render buttons from this; do not re-derive it. */
+            actions: ("reconcile" | "start_processing" | "mark_shipped" | "mark_delivered" | "cancel" | "record_refund")[];
+            canceledAt: string | null;
+            currency: string;
+            email: string;
+            history: {
+                at: string;
+                by: string;
+                note?: string;
+                /** @enum {string} */
+                status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+            }[];
+            id: string;
+            itemCount: number;
+            lines: components["schemas"]["OrderLine"][];
+            /** @example HAE-8KDM2P4Q */
+            orderNumber: string;
+            paidAt: string | null;
+            payment: {
+                amountCaptured: components["schemas"]["Money"] & (Record<string, never> | null);
+                capturedAt: string | null;
+                captureId: string | null;
+                intentId: string | null;
+                /** @description Which verification refused a payment, when one did. */
+                lastError: string | null;
+                paid: boolean;
+                /** @enum {string} */
+                provider: "stripe" | "paypal";
+                providerStatus: string | null;
+            };
+            placedAt: string;
+            reservationExpiresAt: string | null;
+            shippingAddress: components["schemas"]["ShippingAddress"];
+            /** @enum {string} */
+            status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+            stockReserved: boolean;
+            stuckPayment: boolean;
+            /** @description grandTotal equals subtotal: this shop charges no delivery and no tax. The breakdown exists so that every amount check reads grandTotal specifically, and a shipping line added later changes one function rather than five. */
+            totals: {
+                grandTotal: components["schemas"]["Money"];
+                subtotal: components["schemas"]["Money"];
+            };
+            userId: string | null;
+        };
+        AdminOrderSummary: {
+            email: string;
+            grandTotal: components["schemas"]["Money"];
+            guest: boolean;
+            id: string;
+            itemCount: number;
+            orderNumber: string;
+            paidAt: string | null;
+            placedAt: string;
+            /** @enum {string} */
+            provider: "stripe" | "paypal";
+            /** @enum {string} */
+            status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+            /** @description Unpaid, with a payment started more than 15 minutes ago — most likely a lost webhook, and what the reconcile action is for. */
+            stuckPayment: boolean;
+        };
+        AdminProduct: {
+            _id: string;
+            attributes: components["schemas"]["ProductAttribute"][];
+            category: string;
+            categoryAncestors: string[];
+            createdAt: string;
+            defaultVariantId?: string;
+            description?: string;
+            images: {
+                alt: string;
+                blurDataUrl?: string;
+                height?: number;
+                position: number;
+                publicId: string;
+                width?: number;
+            }[];
+            inStock: boolean;
+            needsAttention: boolean;
+            priceRange?: {
+                currency: string;
+                max: number;
+                min: number;
+            };
+            ratingAverage: number;
+            ratingCount: number;
+            slug: string;
+            /** @enum {string} */
+            status: "draft" | "active" | "archived";
+            subtitle?: string;
+            title: string;
+            updatedAt: string;
+            validationIssues: {
+                code: string;
+                key: string;
+                message: string;
+            }[];
+            variantAxes: string[];
+            variants: components["schemas"]["Variant"][];
+        };
+        AdminProductSummary: {
+            available: number;
+            category: {
+                id: string;
+                name: string;
+                path: string;
+            } | null;
+            id: string;
+            imagePublicId: string | null;
+            inStock: boolean;
+            issueCount: number;
+            needsAttention: boolean;
+            priceRange: {
+                currency: string;
+                max: number;
+                min: number;
+            } | null;
+            slug: string;
+            /** @enum {string} */
+            status: "draft" | "active" | "archived";
+            title: string;
+            updatedAt: string;
+            variantCount: number;
+        };
+        AttributeDefinition: {
+            _id: string;
+            archivedAt?: string;
+            createdAt: string;
+            description?: string;
+            /** @enum {string} */
+            filterUi: "checkbox" | "swatch" | "range" | "toggle" | "select";
+            isFilterable: boolean;
+            isSearchable: boolean;
+            isVariantAxis: boolean;
+            /** @description Permanent. See the create route. */
+            key: string;
+            label: string;
+            options: components["schemas"]["AttributeOption"][];
+            /**
+             * @description Permanent.
+             * @enum {string}
+             */
+            type: "select" | "multiselect" | "text" | "number" | "boolean" | "color" | "dimension";
+            unit?: string;
+            updatedAt: string;
+            validation: {
+                max?: number;
+                maxLength?: number;
+                min?: number;
+                requiredByDefault?: boolean;
+                step?: number;
+            };
+        };
         AttributeOption: {
             label: string;
             order: number;
             swatchHex?: string;
             value: string;
+        };
+        AuditEntry: {
+            actor: {
+                email: string;
+                userId: string;
+            };
+            at: string;
+            id: string;
+            method: string;
+            path: string;
+            requestId: string | null;
+            route: string;
+            status: number;
+            targetId: string | null;
         };
         Cart: {
             currency: string;
@@ -2859,6 +4791,73 @@ export interface components {
             type: "select" | "multiselect" | "text" | "number" | "boolean" | "color" | "dimension";
             unit?: string;
         };
+        CustomerDetail: components["schemas"]["CustomerSummary"] & {
+            activeSessions: number;
+            /** @description On ADMIN_EMAILS: the role would be re-granted at next sign-in. */
+            bootstrapAdmin: boolean;
+            recentOrders: components["schemas"]["AdminOrderSummary"][];
+            self: boolean;
+        };
+        CustomerSummary: {
+            createdAt: string;
+            email: string;
+            id: string;
+            lastOrderAt: string | null;
+            lastSeenAt: string | null;
+            name?: string;
+            orderCount: number;
+            roles: string[];
+            /** @description Money kept, one entry per currency. Unpaid and refunded orders excluded. */
+            spent: components["schemas"]["Money"][];
+        };
+        Dashboard: {
+            catalogue: {
+                lowStock: {
+                    available: number;
+                    productId: string;
+                    sku: string;
+                    threshold: number;
+                    title: string;
+                }[];
+                needsAttention: {
+                    count: number;
+                    recent: {
+                        id: string;
+                        issues: string[];
+                        title: string;
+                    }[];
+                };
+            };
+            orders: {
+                stuckPayments: {
+                    count: number;
+                    oldest: {
+                        email: string;
+                        grandTotal: components["schemas"]["Money"];
+                        id: string;
+                        orderNumber: string;
+                        placedAt: string;
+                        /** @enum {string} */
+                        provider: "stripe" | "paypal";
+                    }[];
+                };
+                toFulfil: number;
+            };
+            revenue: {
+                byCurrency: {
+                    amount: number;
+                    currency: string;
+                    orders: number;
+                }[];
+                windowDays: number;
+            };
+            storefront: {
+                draftUpdatedAt: string | null;
+                draftVersion: number | null;
+                publishedAt: string | null;
+                publishedVersion: number | null;
+            };
+        };
         Device: {
             createdAt: string;
             current: boolean;
@@ -2895,6 +4894,13 @@ export interface components {
                 min?: number;
                 step?: number;
             };
+        };
+        EffectiveAttributeSet: {
+            attributes: components["schemas"]["EffectiveAttribute"][];
+            categoryId: string;
+            categoryPath: string;
+            /** @enum {string} */
+            validationMode: "lenient" | "strict";
         };
         Error: {
             error: {
@@ -3023,6 +5029,17 @@ export interface components {
         };
         Product: components["schemas"]["ProductCard"] & {
             attributes: components["schemas"]["ProductAttribute"][];
+            /** @description Each axis in variantAxes with its label and its values’ labels and swatches, so a picker never has to show the raw slug a variant stores. */
+            axes: {
+                key: string;
+                label: string;
+                options: {
+                    label: string;
+                    swatchHex?: string;
+                    value: string;
+                }[];
+                unit?: string;
+            }[];
             category: string;
             categoryAncestors: string[];
             defaultVariantId?: string;
@@ -3037,6 +5054,8 @@ export interface components {
             displayValue: string;
             group?: string;
             key: string;
+            /** @description The definition’s current label. Absent where the attribute no longer applies to the product’s category. */
+            label?: string;
             order: number;
             /** @enum {string} */
             type: "select" | "multiselect" | "text" | "number" | "boolean" | "color" | "dimension";
@@ -3074,6 +5093,63 @@ export interface components {
             subtitle?: string;
             title: string;
         };
+        ResolvedSection: {
+            /** @default  */
+            body: string;
+            heading: string;
+            id: string;
+            /** @enum {string} */
+            kind: "hero";
+            primary: {
+                href: string;
+                label: string;
+            };
+            secondary?: {
+                href: string;
+                label: string;
+            };
+        } | {
+            /** @default [] */
+            categoryIds: string[];
+            id: string;
+            /** @enum {string} */
+            kind: "shelves";
+            /** @default  */
+            note: string;
+            shelves: {
+                id: string;
+                imagePublicId?: string;
+                name: string;
+                path: string;
+            }[];
+            title: string;
+        } | {
+            category: {
+                name: string;
+                path: string;
+            } | null;
+            categoryId?: string;
+            id: string;
+            /** @enum {string} */
+            kind: "product-row";
+            /** @default 6 */
+            limit: number;
+            /** @default  */
+            note: string;
+            /** @default [] */
+            productIds: string[];
+            products: components["schemas"]["ListingCard"][];
+            /** @enum {string} */
+            source: "newest" | "category" | "handpicked";
+            title: string;
+        } | {
+            body: string;
+            /** @default  */
+            heading: string;
+            id: string;
+            /** @enum {string} */
+            kind: "note";
+        };
         ShippingAddress: {
             city: string;
             country: string;
@@ -3083,6 +5159,80 @@ export interface components {
             phone?: string;
             postalCode?: string;
             region?: string;
+        };
+        StorefrontLayout: {
+            createdAt: string;
+            /** @enum {string} */
+            handle: "home";
+            id: string;
+            note: string;
+            publishedAt: string | null;
+            retiredAt: string | null;
+            /** @description Send it back with a draft save or publish; a stale one is a 409. */
+            revision: number;
+            sections: components["schemas"]["StorefrontSection"][];
+            /** @enum {string} */
+            status: "draft" | "published" | "retired";
+            updatedAt: string;
+            version: number;
+        };
+        StorefrontSection: {
+            /** @default  */
+            body: string;
+            heading: string;
+            id: string;
+            /** @enum {string} */
+            kind: "hero";
+            primary: {
+                href: string;
+                label: string;
+            };
+            secondary?: {
+                href: string;
+                label: string;
+            };
+        } | {
+            /** @default [] */
+            categoryIds: string[];
+            id: string;
+            /** @enum {string} */
+            kind: "shelves";
+            /** @default  */
+            note: string;
+            title: string;
+        } | {
+            categoryId?: string;
+            id: string;
+            /** @enum {string} */
+            kind: "product-row";
+            /** @default 6 */
+            limit: number;
+            /** @default  */
+            note: string;
+            /** @default [] */
+            productIds: string[];
+            /** @enum {string} */
+            source: "newest" | "category" | "handpicked";
+            title: string;
+        } | {
+            body: string;
+            /** @default  */
+            heading: string;
+            id: string;
+            /** @enum {string} */
+            kind: "note";
+        };
+        StorefrontVersion: {
+            createdAt: string;
+            id: string;
+            note: string;
+            publishedAt: string | null;
+            retiredAt: string | null;
+            sectionCount: number;
+            /** @enum {string} */
+            status: "draft" | "published" | "retired";
+            updatedAt: string;
+            version: number;
         };
         /** @description There is no password field, and there never will be. Authentication is a code mailed to the address; see ADR-004. */
         User: {
@@ -3137,13 +5287,24 @@ export interface components {
     headers: never;
     pathItems: never;
 }
+export type SchemaAdminCategory = components['schemas']['AdminCategory'];
+export type SchemaAdminOrder = components['schemas']['AdminOrder'];
+export type SchemaAdminOrderSummary = components['schemas']['AdminOrderSummary'];
+export type SchemaAdminProduct = components['schemas']['AdminProduct'];
+export type SchemaAdminProductSummary = components['schemas']['AdminProductSummary'];
+export type SchemaAttributeDefinition = components['schemas']['AttributeDefinition'];
 export type SchemaAttributeOption = components['schemas']['AttributeOption'];
+export type SchemaAuditEntry = components['schemas']['AuditEntry'];
 export type SchemaCart = components['schemas']['Cart'];
 export type SchemaCartLine = components['schemas']['CartLine'];
 export type SchemaCategory = components['schemas']['Category'];
 export type SchemaCategoryFilter = components['schemas']['CategoryFilter'];
+export type SchemaCustomerDetail = components['schemas']['CustomerDetail'];
+export type SchemaCustomerSummary = components['schemas']['CustomerSummary'];
+export type SchemaDashboard = components['schemas']['Dashboard'];
 export type SchemaDevice = components['schemas']['Device'];
 export type SchemaEffectiveAttribute = components['schemas']['EffectiveAttribute'];
+export type SchemaEffectiveAttributeSet = components['schemas']['EffectiveAttributeSet'];
 export type SchemaError = components['schemas']['Error'];
 export type SchemaFacet = components['schemas']['Facet'];
 export type SchemaFacetValue = components['schemas']['FacetValue'];
@@ -3156,7 +5317,11 @@ export type SchemaOrderLine = components['schemas']['OrderLine'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
 export type SchemaProductCard = components['schemas']['ProductCard'];
+export type SchemaResolvedSection = components['schemas']['ResolvedSection'];
 export type SchemaShippingAddress = components['schemas']['ShippingAddress'];
+export type SchemaStorefrontLayout = components['schemas']['StorefrontLayout'];
+export type SchemaStorefrontSection = components['schemas']['StorefrontSection'];
+export type SchemaStorefrontVersion = components['schemas']['StorefrontVersion'];
 export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
 export type SchemaWishlistEntry = components['schemas']['WishlistEntry'];

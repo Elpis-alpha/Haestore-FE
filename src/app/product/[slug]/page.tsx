@@ -3,14 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import type { Category, ProductAttribute } from '@/lib/api/types';
-import {
-  ApiError,
-  getCategories,
-  getCategoryByPath,
-  getProduct,
-  getProducts,
-  softly,
-} from '@/lib/api/client';
+import { ApiError, getCategories, getProduct, getProducts, softly } from '@/lib/api/client';
 import { breadcrumbFor } from '@/lib/catalog/tree';
 import { Button } from '@/components/ui/button';
 import { SlabRule, VineRule } from '@/components/motifs/rule';
@@ -80,11 +73,11 @@ export default async function ProductPage({ params }: PageProps) {
   const categories = await softly(getCategories(), []);
   const shelf = categories.find((c) => c._id === product.category);
 
-  // The category endpoint is where axis values get their names and swatches. It is
-  // cached and shared with the listing, so this is a lookup rather than a round trip.
-  const detail = shelf ? await softly(getCategoryByPath(shelf.path), null) : null;
+  // Names and swatches for every axis come with the product since Phase 8. They were
+  // recovered from the category's filter list before, which lost any axis that was not
+  // also a filter — the one gap FRONTEND.md recorded.
 
-  const axisLabels = buildAxisLabels(detail?.filters ?? []);
+  const axisLabels = buildAxisLabels(product.axes);
   const trail = shelf ? breadcrumbFor(categories, shelf.path) : [];
   const groups = groupAttributes(product.attributes);
 
@@ -162,10 +155,10 @@ function Specification({ groups, labels }: { groups: AttributeGroup[]; labels: A
                   key={attribute.key}
                   className="flex justify-between gap-6 border-b border-[var(--rule)] py-2 text-sm last:border-b-0"
                 >
-                  {/* The definition's own label where the category endpoint supplies one;
-                      the slug, tidied, where it does not. */}
+                  {/* The definition's label, returned with the product. The slug, tidied, only
+                      for a value whose attribute no longer applies to this category. */}
                   <dt className="text-[var(--ink-muted)]">
-                    {labels[attribute.key]?.label ?? prettify(attribute.key)}
+                    {attribute.label ?? labels[attribute.key]?.label ?? prettify(attribute.key)}
                   </dt>
                   {/* No unit appended: `displayValue` is rendered at write time and
                       already reads "500 g". Adding `unit` again printed "500 g g". */}
@@ -204,13 +197,13 @@ async function MoreFromShelf({ shelfPath, exclude }: { shelfPath: string; exclud
 }
 
 /**
- * Axis value names and swatches, from the category's own attribute definitions.
+ * Axis value names and swatches, keyed for the picker.
  *
  * A variant's `axisValues` carry the admin's raw slugs — `whole-bean`, not "Whole bean" —
- * because the grid is built from values, not labels. The category endpoint already
- * returns each filterable attribute's options with their labels and swatch colours, and
- * an axis attribute is normally filterable too, so the names come free. Where it is not,
- * `ProductView` falls back to prettifying the slug.
+ * because the grid is built from values, not labels. The product response carries each
+ * axis with its options' labels and swatches, so every axis is named whether or not it is
+ * also a filter. `ProductView` still prettifies a slug with no entry, which now only happens
+ * for an axis whose attribute has since been unbound from the category.
  */
 function buildAxisLabels(
   filters: {

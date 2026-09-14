@@ -11,8 +11,8 @@ import { SESSION_COOKIE } from '@/lib/auth/cookie-name';
  * Two jobs, both of which have to happen before anything renders.
  *
  * 1. **One URL per set of filters.** Anything non-canonical gets a 308.
- * 2. **A closed door on the account area**, so a signed-out visitor is redirected
- *    instead of rendering a page that then redirects.
+ * 2. **A closed door on the account area and the admin console**, so a signed-out
+ *    visitor is redirected instead of rendering a page that then redirects.
  *
  * Both are here for the same reason: by the time a server component runs, Next has
  * begun streaming the shell, so `redirect()` can no longer set a status — it degrades
@@ -23,8 +23,13 @@ import { SESSION_COOKIE } from '@/lib/auth/cookie-name';
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
 
-  if (url.pathname === '/account' || url.pathname.startsWith('/account/')) {
-    return guardAccount(request);
+  if (
+    url.pathname === '/account' ||
+    url.pathname.startsWith('/account/') ||
+    url.pathname === '/admin' ||
+    url.pathname.startsWith('/admin/')
+  ) {
+    return guardSignedIn(request);
   }
 
   return canonicaliseListing(request);
@@ -38,11 +43,12 @@ export function middleware(request: NextRequest) {
  * majority of the signed-out ones and costs them a render they would only have been
  * bounced out of.
  *
- * **The real decision is `requireSession` in the page**, which asks the API. This is an
+ * **The real decision is `requireSession` or `requireAdmin` in the layout**, which asks the
+ * API — and for the console, answers a signed-in non-admin with the ordinary 404. This is an
  * optimisation in front of that, never a replacement for it: treating a cookie's
  * existence as proof of a session is how an expired credential becomes a valid one.
  */
-function guardAccount(request: NextRequest) {
+function guardSignedIn(request: NextRequest) {
   if (request.cookies.has(SESSION_COOKIE)) return NextResponse.next();
 
   const target = new URL('/sign-in', request.url);
@@ -76,9 +82,9 @@ function canonicaliseListing(request: NextRequest) {
 
 export const config = {
   /**
-   * The listing routes and the account area, and nothing else. The product page and the
+   * The listing routes, the account area and the admin console, and nothing else. The product page and the
    * home page have no query state to canonicalise and no session to check, and running
    * this over `/_next/*` would put a redirect check in front of every asset request.
    */
-  matcher: ['/shop', '/shop/:path*', '/account', '/account/:path*'],
+  matcher: ['/shop', '/shop/:path*', '/account', '/account/:path*', '/admin', '/admin/:path*'],
 };
