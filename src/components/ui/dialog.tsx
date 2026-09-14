@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Dialog as D } from 'radix-ui';
 import { cn } from '@/lib/cn';
 import { Button } from './button';
@@ -21,6 +22,43 @@ export const Dialog = D.Root;
 export const DialogTrigger = D.Trigger;
 export const DialogClose = D.Close;
 
+type ContentProps = React.ComponentPropsWithoutRef<typeof D.Content>;
+
+/**
+ * Focus goes back to whatever opened the dialog, whatever opened it.
+ *
+ * Radix returns focus on close only to a `Dialog.Trigger`. Most dialogs in this shop are opened
+ * by an ordinary button that sets state — the bag, a review, an order's ending, step-up — and
+ * for every one of those Radix focused nothing, so closing a dialog dropped a keyboard user at
+ * the top of the document. Found in the Phase 9 audit by pressing Escape and asking what had
+ * focus: `<body>`.
+ *
+ * The element that had focus when the dialog opened is remembered in `onOpenAutoFocus`, which
+ * runs before Radix moves focus inside, and focused again on close if it is still in the
+ * document — a button replaced by the action it performed is not, and then Radix's own
+ * behaviour stands. A handler passed in by a caller still runs first and can prevent this.
+ */
+function useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus }: ContentProps) {
+  const opener = useRef<HTMLElement | null>(null);
+  return {
+    onOpenAutoFocus: (event: Event) => {
+      onOpenAutoFocus?.(event);
+      const active = document.activeElement;
+      opener.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    },
+    onCloseAutoFocus: (event: Event) => {
+      onCloseAutoFocus?.(event);
+      if (event.defaultPrevented) return;
+      const target = opener.current;
+      opener.current = null;
+      if (target?.isConnected) {
+        event.preventDefault();
+        target.focus();
+      }
+    },
+  };
+}
+
 function Overlay({ className, ...props }: React.ComponentPropsWithoutRef<typeof D.Overlay>) {
   return (
     <D.Overlay
@@ -35,11 +73,8 @@ function Overlay({ className, ...props }: React.ComponentPropsWithoutRef<typeof 
   );
 }
 
-export function DialogContent({
-  className,
-  children,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof D.Content>) {
+export function DialogContent({ className, children, ...props }: ContentProps) {
+  const focus = useReturnFocus(props);
   return (
     <D.Portal>
       <Overlay />
@@ -52,6 +87,7 @@ export function DialogContent({
           className,
         )}
         {...props}
+        {...focus}
       >
         {children}
         <CloseButton />
@@ -60,11 +96,8 @@ export function DialogContent({
   );
 }
 
-export function DrawerContent({
-  className,
-  children,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof D.Content>) {
+export function DrawerContent({ className, children, ...props }: ContentProps) {
+  const focus = useReturnFocus(props);
   return (
     <D.Portal>
       <Overlay />
@@ -77,6 +110,7 @@ export function DrawerContent({
           className,
         )}
         {...props}
+        {...focus}
       >
         {children}
         <CloseButton />

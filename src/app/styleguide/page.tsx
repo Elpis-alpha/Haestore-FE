@@ -45,59 +45,61 @@ export default function StyleguidePage() {
     <div className="min-h-screen">
       <Nav />
 
-      <header className="mx-auto grid max-w-5xl gap-12 px-6 pt-20 pb-16 sm:pt-28 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div>
-          {/* The page's one uninvited animation: the handle draws, then the name
+      <main>
+        <div className="mx-auto grid max-w-5xl gap-12 px-6 pt-20 pb-16 sm:pt-28 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            {/* The page's one uninvited animation: the handle draws, then the name
               arrives under it. Everything else here moves only when you touch it. */}
-          <Arch className="h-14 w-28 animate-[draw-arch_1100ms_var(--ease-out-soft)_both] text-[var(--ink-muted)] [stroke-dasharray:240]" />
-          <h1 className="wonk mt-6 font-display text-5xl leading-none [--opsz:96] [--wght:600] sm:text-6xl">
-            <span className="inline-block animate-[rise-in_800ms_var(--ease-out-soft)_250ms_both]">
-              Hæstore
-            </span>
-          </h1>
-          <p className="mt-6 max-w-[52ch] text-lg text-[var(--ink-muted)]">
-            Every part the storefront is assembled from, on the ground it will actually sit on.
-            Chocolate underfoot, cream paper for anything you can act on, and colour held back until
-            it has something to say.
-          </p>
-          <p className="mt-3 max-w-[52ch] text-sm text-[var(--ink-faint)]">
-            The ratios printed on each swatch are measured rather than claimed: the same function
-            computes them here and asserts them in <code className="font-sans">tokens.test.ts</code>
-            .
-          </p>
+            <Arch className="h-14 w-28 animate-[draw-arch_1100ms_var(--ease-out-soft)_both] text-[var(--ink-muted)] [stroke-dasharray:240]" />
+            <h1 className="wonk mt-6 font-display text-5xl leading-none [--opsz:96] [--wght:600] sm:text-6xl">
+              <span className="inline-block animate-[rise-in_800ms_var(--ease-out-soft)_250ms_both]">
+                Hæstore
+              </span>
+            </h1>
+            <p className="mt-6 max-w-[52ch] text-lg text-[var(--ink-muted)]">
+              Every part the storefront is assembled from, on the ground it will actually sit on.
+              Chocolate underfoot, cream paper for anything you can act on, and colour held back
+              until it has something to say.
+            </p>
+            <p className="mt-3 max-w-[52ch] text-sm text-[var(--ink-faint)]">
+              The ratios printed on each swatch are measured rather than claimed: the same function
+              computes them here and asserts them in{' '}
+              <code className="font-sans">tokens.test.ts</code>.
+            </p>
+          </div>
+
+          {/* The whole idea at the size a shelf label actually is: paper on wood, the
+            tag with its punched hole, a slab rule, and the leaf meaning in stock. */}
+          <Surface
+            tone="paper"
+            className="w-full max-w-xs animate-[rise-in_900ms_var(--ease-out-soft)_450ms_both] rounded-md p-5 shadow-[var(--shadow-lift)]"
+          >
+            <Tag>$18.00</Tag>
+            <h2 className="mt-4 font-display text-2xl leading-tight [--opsz:32] [--wght:600]">
+              Ethiopia, Yirgacheffe
+            </h2>
+            <p className="mt-1.5 text-sm text-[var(--ink-muted)]">
+              Washed and dried on raised beds. Bergamot, white peach, sweet as it cools.
+            </p>
+            <SlabRule className="my-4" />
+            <div className="flex items-center justify-between gap-3">
+              <Badge tone="good">
+                <Leaf />
+                In stock
+              </Badge>
+              <Rating value={4.3} count={28} />
+            </div>
+          </Surface>
         </div>
 
-        {/* The whole idea at the size a shelf label actually is: paper on wood, the
-            tag with its punched hole, a slab rule, and the leaf meaning in stock. */}
-        <Surface
-          tone="paper"
-          className="w-full max-w-xs animate-[rise-in_900ms_var(--ease-out-soft)_450ms_both] rounded-md p-5 shadow-[var(--shadow-lift)]"
-        >
-          <Tag>$18.00</Tag>
-          <h2 className="mt-4 font-display text-2xl leading-tight [--opsz:32] [--wght:600]">
-            Ethiopia, Yirgacheffe
-          </h2>
-          <p className="mt-1.5 text-sm text-[var(--ink-muted)]">
-            Washed and dried on raised beds. Bergamot, white peach, sweet as it cools.
-          </p>
-          <SlabRule className="my-4" />
-          <div className="flex items-center justify-between gap-3">
-            <Badge tone="good">
-              <Leaf />
-              In stock
-            </Badge>
-            <Rating value={4.3} count={28} />
-          </div>
-        </Surface>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-6 pb-32">
-        <Colour />
-        <Surfaces />
-        <Typography />
-        <Motifs />
-        <Controls />
-        <Assembled />
+        <div className="mx-auto max-w-5xl px-6 pb-32">
+          <Colour />
+          <Surfaces />
+          <Typography />
+          <Motifs />
+          <Controls />
+          <Assembled />
+        </div>
       </main>
     </div>
   );
@@ -168,7 +170,9 @@ function Colour() {
               <table className="w-full max-w-3xl min-w-[34rem] border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-xs text-[var(--ink-faint)]">
-                    <th className="w-16 pb-2 font-medium">&nbsp;</th>
+                    <th className="w-16 pb-2 font-medium">
+                      <span className="sr-only">Swatch</span>
+                    </th>
                     <th className="pb-2 font-medium">Token</th>
                     <th className="pb-2 font-medium">Hex</th>
                     <th className="pb-2 text-right font-medium">On ground</th>
@@ -279,6 +283,7 @@ function Surfaces() {
             </div>
             <input
               readOnly
+              aria-label="Sample field"
               value="A field on this surface"
               className="h-9 w-full rounded-sm border border-[var(--edge)] bg-[var(--field)] px-3 text-sm text-[var(--ink)]"
             />

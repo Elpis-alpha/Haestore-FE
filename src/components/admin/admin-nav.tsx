@@ -18,6 +18,7 @@ const groups = [
     links: [
       { href: '/admin', label: 'Today', exact: true },
       { href: '/admin/orders', label: 'Orders' },
+      { href: '/admin/support', label: 'Support' },
       { href: '/admin/customers', label: 'Customers' },
     ],
   },
@@ -33,6 +34,7 @@ const groups = [
     label: 'Shop front',
     links: [
       { href: '/admin/storefront', label: 'Front page' },
+      { href: '/admin/reviews', label: 'Reviews' },
       { href: '/admin/audit', label: 'Audit log' },
     ],
   },

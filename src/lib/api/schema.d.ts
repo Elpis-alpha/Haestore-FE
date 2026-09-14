@@ -2231,6 +2231,253 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The moderation queue, hidden reviews, or all of them. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    /** @description `unread` (the default) is oldest first; the others newest first. */
+                    queue?: "unread" | "hidden" | "all";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of reviews. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminReview"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/{id}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a review off the product page and out of the average.
+         * @description The note is shown to the review’s author. The review can be restored.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        note: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The review as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                review: components["schemas"]["AdminReview"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The review is not in a state this action applies to — another admin got there first. `details` carries its current `status` and `needsReview`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/{id}/keep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a review read, leaving it as it is. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The review as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                review: components["schemas"]["AdminReview"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The review is not in a state this action applies to — another admin got there first. `details` carries its current `status` and `needsReview`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reviews/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a hidden review back. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The review as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                review: components["schemas"]["AdminReview"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The review is not in a state this action applies to — another admin got there first. `details` carries its current `status` and `needsReview`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/storefront/{handle}": {
         parameters: {
             query?: never;
@@ -2647,6 +2894,291 @@ export interface paths {
                 };
                 /** @description Conflicts with something that already exists. */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The inbox.
+         * @description `status=open` is sorted longest-waiting first; everything else newest first. `q` takes a reference or the start of an email address.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    q?: string;
+                    status?: "open" | "answered" | "closed";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of conversations. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AdminSupportTicketSummary"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One conversation, with the customer and the order it is about. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The conversation. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["AdminSupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support/tickets/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a conversation. Idempotent. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The conversation. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["AdminSupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support/tickets/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply, and optionally close in the same step.
+         * @description The notification email is committed to the mail outbox in the same transaction as the reply, and delivered by the sweep.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        body: string;
+                        /** @default false */
+                        close?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description The conversation, with the reply added. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["AdminSupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The conversation holds its maximum of 100 messages. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support/tickets/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a closed conversation back in the inbox as needing a reply. Idempotent. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The conversation. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["AdminSupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3925,6 +4457,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/products/{slug}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A product’s published reviews, with the summary above them. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                    sort?: "newest" | "highest" | "lowest";
+                };
+                header?: never;
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Published reviews only. A hidden review is in neither the list nor the summary. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["PublicReview"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                            summary: components["schemas"]["RatingSummary"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/sitemap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every live shelf and product, for the sitemap.
+         * @description Never a filter combination: those pages are `noindex`, and a sitemap listing one would contradict that. Capped at the protocol’s 50,000 entries per list.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description What a crawler should index. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                categories: {
+                                    path: string;
+                                    updatedAt: string;
+                                }[];
+                                products: {
+                                    slug: string;
+                                    updatedAt: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checkout/order/{orderNumber}": {
         parameters: {
             query?: never;
@@ -4325,6 +4967,185 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the signed-in person can review, and what they have written. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description `toWrite` is products from delivered orders not yet reviewed, still on sale. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                toWrite: components["schemas"]["ReviewableItem"][];
+                                written: components["schemas"]["MyReview"][];
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Write or replace the signed-in person’s review of a product.
+         * @description One review per person per product, so this is addressed by product and is idempotent. Allowed only with an order of the product that reached `delivered`. A rewrite goes back into the moderation queue and does not unhide a hidden review.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The product id. */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        body?: string;
+                        rating: number;
+                        title?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The review as it now stands. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                review: components["schemas"]["MyReview"];
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description No order of this product has been delivered to this person. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Delete the signed-in person’s own review. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The product id. */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storefront/{handle}": {
         parameters: {
             query?: never;
@@ -4377,6 +5198,301 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in person’s conversations, most recent first. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    perPage?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SupportTicketSummary"][];
+                            page: {
+                                page: number;
+                                perPage: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Open a conversation.
+         * @description Requires an account, whose proven address is where replies go — see ADR-014. `orderNumber` must name one of the caller’s own orders.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        body: string;
+                        orderNumber?: string;
+                        subject: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The new conversation. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["SupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description No session. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Five conversations are already open. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/tickets/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the caller’s conversations. Marks the shop’s replies as seen. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    reference: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The conversation. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["SupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/tickets/{reference}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a conversation. Idempotent. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    reference: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The conversation. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["SupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/support/tickets/{reference}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a message. Reopens a closed conversation. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    reference: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        body: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The conversation, with the message added. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                ticket: components["schemas"]["SupportTicket"];
+                            };
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The conversation holds its maximum of 100 messages. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description The body failed validation. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4679,6 +5795,77 @@ export interface components {
             updatedAt: string;
             variantCount: number;
         };
+        /** @description Every review is from an order that reached the person who wrote it; there is no other kind, so there is no "verified" flag. */
+        AdminReview: components["schemas"]["PublicReview"] & {
+            customer: {
+                email: string | null;
+                id: string;
+            };
+            moderation: {
+                at: string;
+                byEmail: string | null;
+                note: string;
+            } | null;
+            /** @description Nobody in the shop has read this version yet. Set again by every edit. */
+            needsReview: boolean;
+            order: {
+                id: string;
+                orderNumber: string | null;
+            };
+            product: {
+                id: string;
+                onSale: boolean;
+                slug: string;
+                title: string;
+            };
+            /** @enum {string} */
+            status: "published" | "hidden";
+        };
+        AdminSupportTicket: {
+            closedAt: string | null;
+            /** @enum {string|null} */
+            closedBy: "customer" | "shop" | null;
+            createdAt: string;
+            customer: {
+                email: string;
+                id: string;
+                name?: string;
+            } | null;
+            email: string;
+            id: string;
+            lastMessageAt: string;
+            messages: (components["schemas"]["SupportMessage"] & {
+                /** @description Which admin wrote a shop message. Never sent to the customer. */
+                staffEmail: string | null;
+            })[];
+            order: {
+                id: string;
+                orderNumber: string;
+                /** @enum {string} */
+                status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "canceled" | "refunded";
+            } | null;
+            orderNumber: string | null;
+            reference: string;
+            /** @enum {string} */
+            status: "open" | "answered" | "closed";
+            subject: string;
+        };
+        AdminSupportTicketSummary: {
+            createdAt: string;
+            email: string;
+            id: string;
+            lastMessage: {
+                excerpt: string;
+                /** @enum {string} */
+                from: "customer" | "shop";
+            };
+            lastMessageAt: string;
+            orderNumber: string | null;
+            reference: string;
+            /** @enum {string} */
+            status: "open" | "answered" | "closed";
+            subject: string;
+        };
         AttributeDefinition: {
             _id: string;
             archivedAt?: string;
@@ -4851,11 +6038,37 @@ export interface components {
                 }[];
                 windowDays: number;
             };
+            reviews: {
+                unread: {
+                    count: number;
+                    oldest: {
+                        authorName: string;
+                        hidden: boolean;
+                        id: string;
+                        postedAt: string;
+                        productId: string;
+                        productTitle: string;
+                        rating: number;
+                    }[];
+                };
+            };
             storefront: {
                 draftUpdatedAt: string | null;
                 draftVersion: number | null;
                 publishedAt: string | null;
                 publishedVersion: number | null;
+            };
+            support: {
+                waiting: {
+                    count: number;
+                    oldest: {
+                        email: string;
+                        id: string;
+                        reference: string;
+                        subject: string;
+                        waitingSince: string;
+                    }[];
+                };
             };
         };
         Device: {
@@ -4985,6 +6198,20 @@ export interface components {
             amount: number;
             currency: string;
         };
+        /** @description Every review is from an order that reached the person who wrote it; there is no other kind, so there is no "verified" flag. */
+        MyReview: components["schemas"]["PublicReview"] & {
+            /** @description The shop’s note to the author, present only while the review is hidden. */
+            hiddenReason: string | null;
+            product: {
+                id: string;
+                imagePublicId?: string;
+                onSale: boolean;
+                slug: string;
+                title: string;
+            };
+            /** @enum {string} */
+            status: "published" | "hidden";
+        };
         Order: {
             /** @description Returned exactly once, to a guest, in the response that created the order. Only its HMAC is stored, so it can never be read back — keep it or lose access. */
             claimToken?: string;
@@ -5093,6 +6320,32 @@ export interface components {
             subtitle?: string;
             title: string;
         };
+        /** @description Every review is from an order that reached the person who wrote it; there is no other kind, so there is no "verified" flag. */
+        PublicReview: {
+            /** @description A first name and an initial, rendered when the review was written. Never an email address, and never a whole name. */
+            authorName: string;
+            body?: string;
+            createdAt: string;
+            editedAt: string | null;
+            id: string;
+            /** @description The variant as bought — axis keys and value slugs. */
+            purchased: {
+                key: string;
+                value: string;
+            }[];
+            rating: number;
+            title?: string;
+        };
+        RatingSummary: {
+            /** @description Two decimal places; 0 when there are none. */
+            average: number;
+            count: number;
+            /** @description Five stars down to one, every star present. */
+            distribution: {
+                count: number;
+                rating: number;
+            }[];
+        };
         ResolvedSection: {
             /** @default  */
             body: string;
@@ -5149,6 +6402,14 @@ export interface components {
             id: string;
             /** @enum {string} */
             kind: "note";
+        };
+        ReviewableItem: {
+            deliveredAt: string;
+            imagePublicId?: string;
+            orderNumber: string;
+            productId: string;
+            slug: string;
+            title: string;
         };
         ShippingAddress: {
             city: string;
@@ -5234,6 +6495,48 @@ export interface components {
             updatedAt: string;
             version: number;
         };
+        SupportMessage: {
+            at: string;
+            body: string;
+            /** @enum {string} */
+            from: "customer" | "shop";
+            id: string;
+        };
+        SupportTicket: {
+            closedAt: string | null;
+            createdAt: string;
+            lastMessageAt: string;
+            messages: components["schemas"]["SupportMessage"][];
+            orderNumber: string | null;
+            /** @example SUP-7K3M90 */
+            reference: string;
+            /**
+             * @description Who owes the next message: `open` — the shop; `answered` — the shop replied last; `closed` — ended, until the customer writes again.
+             * @enum {string}
+             */
+            status: "open" | "answered" | "closed";
+            subject: string;
+        };
+        SupportTicketSummary: {
+            createdAt: string;
+            lastMessage: {
+                excerpt: string;
+                /** @enum {string} */
+                from: "customer" | "shop";
+            };
+            lastMessageAt: string;
+            orderNumber: string | null;
+            /** @example SUP-7K3M90 */
+            reference: string;
+            /**
+             * @description Who owes the next message: `open` — the shop; `answered` — the shop replied last; `closed` — ended, until the customer writes again.
+             * @enum {string}
+             */
+            status: "open" | "answered" | "closed";
+            subject: string;
+            /** @description The shop has replied since the customer last opened the conversation. */
+            unread: boolean;
+        };
         /** @description There is no password field, and there never will be. Authentication is a code mailed to the address; see ADR-004. */
         User: {
             createdAt: string;
@@ -5292,6 +6595,9 @@ export type SchemaAdminOrder = components['schemas']['AdminOrder'];
 export type SchemaAdminOrderSummary = components['schemas']['AdminOrderSummary'];
 export type SchemaAdminProduct = components['schemas']['AdminProduct'];
 export type SchemaAdminProductSummary = components['schemas']['AdminProductSummary'];
+export type SchemaAdminReview = components['schemas']['AdminReview'];
+export type SchemaAdminSupportTicket = components['schemas']['AdminSupportTicket'];
+export type SchemaAdminSupportTicketSummary = components['schemas']['AdminSupportTicketSummary'];
 export type SchemaAttributeDefinition = components['schemas']['AttributeDefinition'];
 export type SchemaAttributeOption = components['schemas']['AttributeOption'];
 export type SchemaAuditEntry = components['schemas']['AuditEntry'];
@@ -5312,16 +6618,23 @@ export type SchemaLineChange = components['schemas']['LineChange'];
 export type SchemaListingCard = components['schemas']['ListingCard'];
 export type SchemaMergeReport = components['schemas']['MergeReport'];
 export type SchemaMoney = components['schemas']['Money'];
+export type SchemaMyReview = components['schemas']['MyReview'];
 export type SchemaOrder = components['schemas']['Order'];
 export type SchemaOrderLine = components['schemas']['OrderLine'];
 export type SchemaProduct = components['schemas']['Product'];
 export type SchemaProductAttribute = components['schemas']['ProductAttribute'];
 export type SchemaProductCard = components['schemas']['ProductCard'];
+export type SchemaPublicReview = components['schemas']['PublicReview'];
+export type SchemaRatingSummary = components['schemas']['RatingSummary'];
 export type SchemaResolvedSection = components['schemas']['ResolvedSection'];
+export type SchemaReviewableItem = components['schemas']['ReviewableItem'];
 export type SchemaShippingAddress = components['schemas']['ShippingAddress'];
 export type SchemaStorefrontLayout = components['schemas']['StorefrontLayout'];
 export type SchemaStorefrontSection = components['schemas']['StorefrontSection'];
 export type SchemaStorefrontVersion = components['schemas']['StorefrontVersion'];
+export type SchemaSupportMessage = components['schemas']['SupportMessage'];
+export type SchemaSupportTicket = components['schemas']['SupportTicket'];
+export type SchemaSupportTicketSummary = components['schemas']['SupportTicketSummary'];
 export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
 export type SchemaWishlistEntry = components['schemas']['WishlistEntry'];

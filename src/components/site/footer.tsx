@@ -29,7 +29,9 @@ export async function SiteFooter() {
           </div>
 
           {roots.length > 0 && (
-            <nav aria-label="Shelves">
+            <nav aria-label="All shelves">
+              {/* Named apart from the header's "Shelves", so a screen reader's list of landmarks
+                  shows two navigations it can tell apart rather than one name twice. */}
               <h2 className="font-display text-sm [--wght:600]">Shelves</h2>
               <ul className="mt-3 grid grid-cols-2 gap-x-10 gap-y-1.5 sm:grid-cols-1">
                 {roots.map((root) => (
@@ -51,9 +53,14 @@ export async function SiteFooter() {
 
         <div className="flex flex-col-reverse gap-3 text-xs text-[var(--ink-faint)] sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Hæstore</p>
-          <Link href="/styleguide" className="hover:text-[var(--ink)]">
-            Specimen sheet
-          </Link>
+          <span className="flex gap-5">
+            <Link href="/support" className="hover:text-[var(--ink)]">
+              Help
+            </Link>
+            <Link href="/styleguide" className="hover:text-[var(--ink)]">
+              Specimen sheet
+            </Link>
+          </span>
         </div>
       </div>
     </footer>

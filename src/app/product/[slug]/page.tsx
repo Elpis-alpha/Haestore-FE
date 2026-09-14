@@ -2,13 +2,28 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import type { Category, ProductAttribute } from '@/lib/api/types';
-import { ApiError, getCategories, getProduct, getProducts, softly } from '@/lib/api/client';
+import type { Category, Product, ProductAttribute } from '@/lib/api/types';
+import {
+  ApiError,
+  getCategories,
+  getProduct,
+  getProductReviews,
+  getProducts,
+  softly,
+  type ReviewPage,
+} from '@/lib/api/client';
 import { breadcrumbFor } from '@/lib/catalog/tree';
+import { absoluteUrl } from '@/lib/seo/site';
+import {
+  breadcrumbStructuredData,
+  productStructuredData,
+  serializeJsonLd,
+} from '@/lib/seo/structured-data';
 import { Button } from '@/components/ui/button';
 import { SlabRule, VineRule } from '@/components/motifs/rule';
 import { ProductGrid, ProductGridSkeleton } from '@/components/catalog/product-grid';
 import { ProductView, type AxisLabels } from '@/components/catalog/product-view';
+import { ProductReviews } from '@/components/reviews/product-reviews';
 
 /**
  * One product.
@@ -54,12 +69,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'website',
       title: product.title,
       description: product.subtitle ?? product.description?.slice(0, 200),
-      // The same Cloudinary transformation the page's own images use, at the size
-      // link previews actually render, rather than shipping an original.
-      ...(image ? { images: [{ url: ogImageUrl(image.publicId), alt: image.alt }] } : {}),
+      // The same Cloudinary transformation the page's own images use, at the size link
+      // previews actually render, rather than shipping an original. A page's `openGraph`
+      // replaces the layout's whole object, so a product with no photograph states the
+      // shop's own card again rather than inheriting nothing.
+      images: image ? [{ url: ogImageUrl(image.publicId), alt: image.alt }] : [DEFAULT_OG_IMAGE],
     },
   };
 }
+
+const DEFAULT_OG_IMAGE = {
+  url: '/og/haestore.png',
+  width: 1200,
+  height: 630,
+  alt: 'Hæstore — an artisanal general store',
+};
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
@@ -70,7 +94,13 @@ export default async function ProductPage({ params }: PageProps) {
   });
   if (!product) notFound();
 
-  const categories = await softly(getCategories(), []);
+  // The first page of reviews is part of this page's content, so it is read here rather than
+  // streamed: it belongs in the HTML a crawler and a slow connection receive. Softly, because
+  // a review read that fails is a product page with one section fewer, not an error page.
+  const [categories, reviews] = await Promise.all([
+    softly(getCategories(), []),
+    softly(getProductReviews(product.slug), null),
+  ]);
   const shelf = categories.find((c) => c._id === product.category);
 
   // Names and swatches for every axis come with the product since Phase 8. They were
@@ -83,6 +113,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <StructuredData product={product} trail={trail} reviews={reviews} />
       <Breadcrumb trail={trail} title={product.title} />
 
       {/* Narrower than the page. The details column is a measure to read, not a space
@@ -111,6 +142,8 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </section>
       )}
+
+      {reviews && <ProductReviews slug={product.slug} reviews={reviews} labels={axisLabels} />}
 
       {shelf && (
         <section className="mt-20">
@@ -285,6 +318,62 @@ function Breadcrumb({ trail, title }: { trail: Category[]; title: string }) {
 function prettify(value: string): string {
   const spaced = value.replace(/[-_]+/g, ' ').trim();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * The product, its offers, its rating and its place in the shop, for search engines.
+ *
+ * Emitted through `serializeJsonLd`, never `JSON.stringify` directly: the block holds a
+ * product title and the text of reviews strangers wrote, and a `</script>` in either would
+ * otherwise end the element and run whatever came after it. See lib/seo/structured-data.ts.
+ */
+function StructuredData({
+  product,
+  trail,
+  reviews,
+}: {
+  product: Product;
+  trail: Category[];
+  reviews: ReviewPage | null;
+}) {
+  const url = absoluteUrl(`/product/${product.slug}`);
+  const data = [
+    productStructuredData({
+      title: product.title,
+      ...(product.subtitle ? { subtitle: product.subtitle } : {}),
+      ...(product.description ? { description: product.description } : {}),
+      url,
+      imageUrls: product.images.flatMap((image) => {
+        const src = photographUrl(image.publicId);
+        return src ? [src] : [];
+      }),
+      variants: product.variants,
+      ratingAverage: product.ratingAverage,
+      ratingCount: product.ratingCount,
+      reviews: reviews?.data ?? [],
+    }),
+    breadcrumbStructuredData([
+      { name: 'Shop', url: absoluteUrl('/shop') },
+      ...trail.map((entry) => ({ name: entry.name, url: absoluteUrl(`/shop/${entry.path}`) })),
+      { name: product.title, url },
+    ]),
+  ];
+
+  return (
+    <script
+      type="application/ld+json"
+      // Safe because of the serialiser, which escapes every character that could end the
+      // element; the content is data, never markup.
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
+    />
+  );
+}
+
+/** A full-width photograph for structured data, or nothing where Cloudinary is not set up. */
+function photographUrl(publicId: string): string | null {
+  const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloud) return null;
+  return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1600/${publicId}`;
 }
 
 function ogImageUrl(publicId: string): string {

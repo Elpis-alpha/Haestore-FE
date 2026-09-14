@@ -1,4 +1,4 @@
-import type { OrderStatus } from './types';
+import type { OrderStatus, TicketStatus } from './types';
 
 /**
  * The console's vocabulary.
@@ -27,6 +27,19 @@ export function adminStatusTone(status: OrderStatus): 'good' | 'note' | 'neutral
   if (status === 'shipped' || status === 'delivered') return 'good';
   if (status === 'canceled' || status === 'refunded') return 'neutral';
   return 'note';
+}
+
+/** A conversation's status from behind the counter: whether it is waiting on us. */
+export const ADMIN_TICKET_LABELS: Record<TicketStatus, string> = {
+  open: 'Needs a reply',
+  answered: 'Answered',
+  closed: 'Closed',
+};
+
+export function adminTicketTone(status: TicketStatus): 'good' | 'note' | 'neutral' {
+  if (status === 'open') return 'note';
+  if (status === 'answered') return 'good';
+  return 'neutral';
 }
 
 /**

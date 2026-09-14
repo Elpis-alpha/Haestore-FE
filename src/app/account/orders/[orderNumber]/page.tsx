@@ -16,6 +16,12 @@ export async function generateMetadata({
   return { title: orderNumber };
 }
 
+/** One entry per product: two grinds of the same coffee are one thing to review. */
+function uniqueProducts<T extends { productId: string }>(lines: T[]): T[] {
+  const seen = new Set<string>();
+  return lines.filter((line) => !seen.has(line.productId) && seen.add(line.productId));
+}
+
 /**
  * One order, as it was sold.
  *
@@ -92,8 +98,44 @@ export default async function OrderPage({ params }: { params: Promise<{ orderNum
             <p className="text-[var(--ink-faint)]">Receipt sent to</p>
             <p className="break-words">{order.email}</p>
           </div>
+          <div>
+            <p className="text-[var(--ink-faint)]">Something wrong?</p>
+            <Link
+              href={`/account/support/new?order=${encodeURIComponent(order.orderNumber)}`}
+              className="underline underline-offset-4"
+            >
+              Ask us about this order
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* Offered only once the parcel has arrived, which is when a review is possible at all —
+          the API refuses one for an order that has not reached `delivered`. */}
+      {order.status === 'delivered' && (
+        <section aria-labelledby="review-heading" className="flex flex-col gap-3">
+          <SlabRule />
+          <h2 id="review-heading" className="font-display text-lg [--opsz:20] [--wght:600]">
+            Now that it has arrived
+          </h2>
+          <ul className="flex flex-col gap-2 text-sm">
+            {uniqueProducts(order.lines).map((line) => (
+              <li
+                key={line.productId}
+                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
+              >
+                <span>{line.title}</span>
+                <Link
+                  href={`/account/reviews?write=${line.productId}`}
+                  className="underline underline-offset-4"
+                >
+                  Review it
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }

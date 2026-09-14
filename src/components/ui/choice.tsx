@@ -68,7 +68,11 @@ export function CheckRow({
       className={cn(
         'group flex cursor-pointer items-center gap-2.5 rounded-sm py-1.5 pr-2 pl-1',
         'text-sm text-[var(--ink)] transition-colors hover:bg-[var(--ink)]/6',
-        'has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-45',
+        // A disabled row's words drop to the faint ink rather than fading the whole row. The
+        // zero-count facet value is shown *so that it can be read* — faded to 45% it measured
+        // 3.48:1 in the Phase 9 audit, and --ink-faint is held at 4.5:1 on every surface by
+        // tokens.test.ts. The box itself still dims, which is what says "not now".
+        'has-[:disabled]:cursor-not-allowed has-[:disabled]:text-[var(--ink-faint)]',
         className,
       )}
     >

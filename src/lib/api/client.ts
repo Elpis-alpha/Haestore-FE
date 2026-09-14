@@ -148,6 +148,35 @@ export async function getProduct(slug: string): Promise<Product> {
   return body.data;
 }
 
+export type ReviewPage =
+  paths['/api/catalog/products/{slug}/reviews']['get']['responses'][200]['content']['application/json'];
+
+/**
+ * The first page of a product's reviews, for the product page.
+ *
+ * Cached for the same minute as the product itself and tagged with it, so the rating in the
+ * page's heading and the reviews beneath it age together rather than disagreeing for a
+ * minute after somebody writes one. Later pages and other sorts are fetched from the browser.
+ */
+export async function getProductReviews(slug: string): Promise<ReviewPage> {
+  return apiGet<ReviewPage>(`/api/catalog/products/${encodeURIComponent(slug)}/reviews`, {
+    revalidate: 60,
+    tags: ['products', `product:${slug}`, `reviews:${slug}`],
+  });
+}
+
+export type SitemapEntries =
+  paths['/api/catalog/sitemap']['get']['responses'][200]['content']['application/json']['data'];
+
+/** Every live shelf and product. Cached for an hour; a sitemap is not read by the minute. */
+export async function getSitemapEntries(): Promise<SitemapEntries> {
+  const body = await apiGet<{ data: SitemapEntries }>('/api/catalog/sitemap', {
+    revalidate: 3600,
+    tags: ['sitemap'],
+  });
+  return body.data;
+}
+
 /**
  * A catalogue read that must not take the page down with it.
  *

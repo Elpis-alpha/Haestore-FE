@@ -32,7 +32,7 @@ export const metadata: Metadata = { title: { absolute: 'Today · Admin · Hæsto
  */
 export default async function AdminTodayPage() {
   const { data } = await adminRead<{ data: Dashboard }>('/api/admin/dashboard', '/admin');
-  const { orders, catalogue, revenue, storefront } = data;
+  const { orders, catalogue, revenue, storefront, support, reviews } = data;
 
   return (
     <>
@@ -49,6 +49,33 @@ export default async function AdminTodayPage() {
               {orders.toFulfil === 0
                 ? 'No orders are waiting to be packed.'
                 : `${plural(orders.toFulfil, 'order is', 'orders are')} paid for and not yet shipped.`}
+            </DaybookLine>
+
+            <DaybookLine
+              done={support.waiting.count === 0}
+              href="/admin/support"
+              action="Open the inbox"
+            >
+              {support.waiting.count === 0
+                ? 'Nobody is waiting on a reply.'
+                : `${plural(support.waiting.count, 'person is', 'people are')} waiting on a reply.`}
+              {support.waiting.oldest.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1 text-sm">
+                  {support.waiting.oldest.map((ticket) => (
+                    <li key={ticket.id}>
+                      <Link
+                        href={`/admin/support/${ticket.id}`}
+                        className="underline decoration-[var(--rule)] underline-offset-4 hover:decoration-[var(--ink)]"
+                      >
+                        {ticket.subject}
+                      </Link>{' '}
+                      <span className="text-[var(--ink-muted)]">
+                        from {ticket.email}, waiting since {formatDateTime(ticket.waitingSince)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </DaybookLine>
 
             <DaybookLine
@@ -98,6 +125,26 @@ export default async function AdminTodayPage() {
                         {product.title}
                       </Link>{' '}
                       <span className="text-[var(--ink-muted)]">{product.issues[0]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </DaybookLine>
+
+            <DaybookLine done={reviews.unread.count === 0} href="/admin/reviews" action="Read them">
+              {reviews.unread.count === 0
+                ? 'Every review has been read.'
+                : `${plural(reviews.unread.count, 'review is', 'reviews are')} on product pages and not yet read by anyone here.`}
+              {reviews.unread.oldest.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1 text-sm">
+                  {reviews.unread.oldest.map((review) => (
+                    <li key={review.id}>
+                      <span>{review.productTitle}</span>{' '}
+                      <span className="text-[var(--ink-muted)]">
+                        — {review.rating} of 5 from {review.authorName},{' '}
+                        {formatDate(review.postedAt)}
+                        {review.hidden && ' (hidden, and edited since)'}
+                      </span>
                     </li>
                   ))}
                 </ul>

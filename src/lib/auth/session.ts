@@ -6,6 +6,8 @@ import { SESSION_COOKIE } from './cookie-name';
 import type { Device, MeResponse, User } from '@/lib/api/types';
 import type { WishlistEntry } from '@/lib/cart/types';
 import type { Order } from '@/lib/checkout/types';
+import type { MyReviews } from '@/lib/reviews/types';
+import type { SupportTicket, SupportTicketSummary } from '@/lib/support/types';
 import type { paths } from '@/lib/api/schema';
 
 type OrderListResponse =
@@ -139,6 +141,30 @@ export async function requireAdmin(returnTo: string): Promise<Session> {
   const session = await requireSession(returnTo);
   if (!session.account.roles.includes('admin')) notFound();
   return session;
+}
+
+/**
+ * What this person can review and what they have written, read on the server like the rest
+ * of the account area.
+ */
+export async function getMyReviews(): Promise<MyReviews> {
+  return (await authedGet<MyReviews>('/api/reviews/mine')) ?? { toWrite: [], written: [] };
+}
+
+/** The first page of this person's support conversations, most recent first. */
+export async function getMyTickets(): Promise<SupportTicketSummary[]> {
+  return (await authedGet<SupportTicketSummary[]>('/api/support/tickets')) ?? [];
+}
+
+/** One of this person's conversations, or null — "not yours" and "no such" are one answer. */
+export async function getMyTicket(reference: string): Promise<SupportTicket | null> {
+  return (
+    (
+      await authedGet<{ ticket: SupportTicket }>(
+        `/api/support/tickets/${encodeURIComponent(reference)}`,
+      )
+    )?.ticket ?? null
+  );
 }
 
 /**

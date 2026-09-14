@@ -48,7 +48,18 @@ export const metadata: Metadata = {
     siteName: 'Hæstore',
     title: 'Hæstore — an artisanal general store',
     description: 'Coffee and tea, ceramics, botanicals, textiles, pantry and hand tools.',
+    // A static file in public/, not an `opengraph-image.tsx`. Generating one at request time
+    // means shipping an image renderer in the Worker bundle for a picture that never changes.
+    images: [
+      {
+        url: '/og/haestore.png',
+        width: 1200,
+        height: 630,
+        alt: 'Hæstore — an artisanal general store',
+      },
+    ],
   },
+  twitter: { card: 'summary_large_image' },
 };
 
 export const viewport: Viewport = {

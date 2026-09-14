@@ -42,6 +42,11 @@ export type StorefrontState =
 export type StorefrontPreview =
   paths['/api/admin/storefront/{handle}/versions/{version}/preview']['get']['responses'][200]['content']['application/json']['data'];
 
+export type AdminReview = Schemas['AdminReview'];
+export type AdminSupportTicket = Schemas['AdminSupportTicket'];
+export type AdminSupportTicketSummary = Schemas['AdminSupportTicketSummary'];
+export type TicketStatus = AdminSupportTicket['status'];
+
 export type Dashboard = Schemas['Dashboard'];
 export type AuditEntry = Schemas['AuditEntry'];
 
