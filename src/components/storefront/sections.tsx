@@ -28,6 +28,18 @@ export function StorefrontSections({ sections }: { sections: ResolvedSection[] }
       (s.kind === 'product-row' && s.products.length > 0),
   );
 
+  // A layout may show one product in two rows — the house espresso hand-picked and again in
+  // the coffee row. Only its first card on the page carries the transition name, because two
+  // elements claiming one name break the transition for both.
+  const firstCards = new Map<string, ReadonlySet<string>>();
+  const named = new Set<string>();
+  for (const section of sections) {
+    if (section.kind !== 'product-row') continue;
+    const fresh = section.products.map((p) => p.slug).filter((slug) => !named.has(slug));
+    for (const slug of fresh) named.add(slug);
+    firstCards.set(section.id, new Set(fresh));
+  }
+
   return (
     <>
       {sections.map((section, index) => {
@@ -40,7 +52,11 @@ export function StorefrontSections({ sections }: { sections: ResolvedSection[] }
             ) : null;
           case 'product-row':
             return section.products.length > 0 ? (
-              <ProductRowSection key={section.id} section={section} />
+              <ProductRowSection
+                key={section.id}
+                section={section}
+                named={firstCards.get(section.id) ?? new Set()}
+              />
             ) : null;
           case 'note':
             return <NoteSection key={section.id} section={section} />;
@@ -170,8 +186,11 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
 
 function ProductRowSection({
   section,
+  named,
 }: {
   section: Extract<ResolvedSection, { kind: 'product-row' }>;
+  /** The products whose first card on the page is in this row. */
+  named: ReadonlySet<string>;
 }) {
   const more =
     section.source === 'newest'
@@ -183,7 +202,7 @@ function ProductRowSection({
   return (
     <section className="mx-auto mb-20 max-w-7xl px-4 sm:px-6 lg:px-8">
       <SectionHeading title={section.title} note={section.note} />
-      <ProductGrid products={section.products} className="mt-8" />
+      <ProductGrid products={section.products} shared={named} className="mt-8" />
       {more && (
         <div className="mt-10 flex justify-center">
           <Button asChild variant="outline">

@@ -13,6 +13,7 @@ import {
   type ReviewPage,
 } from '@/lib/api/client';
 import { breadcrumbFor } from '@/lib/catalog/tree';
+import { photographUrl } from '@/lib/images/source';
 import { absoluteUrl } from '@/lib/seo/site';
 import {
   breadcrumbStructuredData,
@@ -60,6 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!product) return { title: 'Not found' };
 
   const image = product.images[0];
+  const card = image ? photographUrl(image.publicId, { width: 1200, height: 630 }) : null;
 
   return {
     title: product.title,
@@ -73,7 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       // previews actually render, rather than shipping an original. A page's `openGraph`
       // replaces the layout's whole object, so a product with no photograph states the
       // shop's own card again rather than inheriting nothing.
-      images: image ? [{ url: ogImageUrl(image.publicId), alt: image.alt }] : [DEFAULT_OG_IMAGE],
+      images: image && card ? [{ url: card, alt: image.alt }] : [DEFAULT_OG_IMAGE],
     },
   };
 }
@@ -344,7 +346,7 @@ function StructuredData({
       ...(product.description ? { description: product.description } : {}),
       url,
       imageUrls: product.images.flatMap((image) => {
-        const src = photographUrl(image.publicId);
+        const src = photographUrl(image.publicId, { width: 1600 });
         return src ? [src] : [];
       }),
       variants: product.variants,
@@ -367,17 +369,4 @@ function StructuredData({
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
     />
   );
-}
-
-/** A full-width photograph for structured data, or nothing where Cloudinary is not set up. */
-function photographUrl(publicId: string): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  if (!cloud) return null;
-  return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1600/${publicId}`;
-}
-
-function ogImageUrl(publicId: string): string {
-  const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  if (!cloud) return `/${publicId}`;
-  return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${publicId}`;
 }

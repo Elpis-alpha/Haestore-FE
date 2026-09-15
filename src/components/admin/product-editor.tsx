@@ -33,10 +33,14 @@ import type { FlatCategory } from '@/lib/admin/tree';
 import type { AdminProduct, EffectiveAttribute, EffectiveAttributeSet } from '@/lib/admin/types';
 import { Sheet } from './ledger';
 import { useAdminAction } from './console-provider';
+import { PhotoUpload } from './photo-upload';
 
 const UNSET = '__unset';
 const WARN_AT = 24;
 const LIMIT = 100;
+
+/** An image as the form holds it: everything the API stores except where it sits in the list. */
+type ImageDraft = Omit<AdminProduct['images'][number], 'position'>;
 
 /**
  * The product form, generated from the shelf.
@@ -104,11 +108,11 @@ export function ProductEditor({
           },
         ],
   );
-  const [images, setImages] = useState(
+  const [images, setImages] = useState<ImageDraft[]>(() =>
     (product?.images ?? [])
       .slice()
       .sort((a, b) => a.position - b.position)
-      .map((image) => ({ publicId: image.publicId, alt: image.alt })),
+      .map(({ position: _position, ...image }) => image),
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [moveTo, setMoveTo] = useState(categoryId);
@@ -176,9 +180,14 @@ export function ProductEditor({
       attributes: attributes.payload,
       variantAxes: chosenAxes.map((a) => a.key),
       variants: variants.variants,
+      // Everything an image carries goes back, not just its id: dropping the dimensions would
+      // cost the placeholder its shape, and dropping the credit would leave a photograph on
+      // the shelf without the attribution its licence requires. Until Phase 10 this sent the
+      // id and the description only, and every save quietly stripped the rest.
       images: images
         .filter((image) => image.publicId.trim())
         .map((image, position) => ({
+          ...image,
           publicId: image.publicId.trim(),
           alt: image.alt.trim(),
           position,
@@ -535,14 +544,18 @@ export function ProductEditor({
               {images.map((image, index) => (
                 <div key={index} className="flex flex-wrap items-end gap-2">
                   <Field className="min-w-48 grow">
-                    <FieldLabel className="text-xs">Cloudinary public id</FieldLabel>
+                    <FieldLabel className="text-xs">
+                      Cloudinary public id or Unsplash address
+                    </FieldLabel>
                     <Input
                       value={image.publicId}
                       className="font-mono text-xs"
                       onChange={(e) =>
                         setImages((list) =>
                           list.map((img, i) =>
-                            i === index ? { ...img, publicId: e.target.value } : img,
+                            // A different source is a different photograph: the size, placeholder
+                            // and credit belonged to the one it replaces.
+                            i === index ? { publicId: e.target.value, alt: img.alt } : img,
                           ),
                         )
                       }
@@ -569,17 +582,29 @@ export function ProductEditor({
                   >
                     Remove
                   </Button>
+                  {image.credit && (
+                    <p className="basis-full text-xs text-[var(--ink-faint)]">
+                      Photo by {image.credit.author} on {image.credit.source}. The credit stays with
+                      the photograph and is shown beside it on the product page.
+                    </p>
+                  )}
                 </div>
               ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="self-start"
-                onClick={() => setImages((list) => [...list, { publicId: '', alt: '' }])}
-              >
-                Add a photograph
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <PhotoUpload
+                  onUploaded={(photograph) =>
+                    setImages((list) => [...list, { ...photograph, alt: '' }])
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setImages((list) => [...list, { publicId: '', alt: '' }])}
+                >
+                  Add by public id
+                </Button>
+              </div>
               <p className="text-xs text-[var(--ink-faint)]">
                 The first is the one on the shelf. The description is read aloud to people who
                 cannot see it.

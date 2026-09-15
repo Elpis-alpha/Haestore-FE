@@ -13,12 +13,17 @@ import { ProductCard } from './product-card';
  */
 export function ProductGrid({
   products,
-  /** Cards on the shop and home pages grow into the product page; a related row does not. */
+  /**
+   * Which cards grow into the product page. All of them on the shop; none in a related row,
+   * which sits beside the hero it would collide with; and on a composed front page, the
+   * slugs named — each product's first card there, since a layout may put one product in two
+   * rows and a transition name must be unique on the page.
+   */
   shared = true,
   className,
 }: {
   products: ListingCard[];
-  shared?: boolean;
+  shared?: boolean | ReadonlySet<string>;
   className?: string;
 }) {
   return (
@@ -32,7 +37,9 @@ export function ProductGrid({
         <li key={product.id}>
           <ProductCard
             product={product}
-            {...(shared ? { transitionName: productTransitionName(product.slug) } : {})}
+            {...(shared === true || (shared !== false && shared.has(product.slug))
+              ? { transitionName: productTransitionName(product.slug) }
+              : {})}
             priority={index < 3}
           />
         </li>

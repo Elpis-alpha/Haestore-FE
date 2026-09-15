@@ -54,3 +54,8 @@ export type Paged<T> = {
   data: T[];
   page: { page: number; perPage: number; total: number; totalPages: number };
 };
+
+/** A signed ticket for one browser-to-Cloudinary upload. */
+export type UploadTicket = Schemas['UploadTicket'];
+/** An uploaded photograph as Cloudinary reports it, ready to put on a product. */
+export type UploadedPhotograph = Schemas['UploadedPhotograph'];

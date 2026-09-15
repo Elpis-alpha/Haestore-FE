@@ -1139,6 +1139,14 @@ export interface paths {
                             /** @default  */
                             alt?: string;
                             blurDataUrl?: string;
+                            credit?: {
+                                author: string;
+                                /** Format: uri */
+                                authorUrl: string;
+                                source: string;
+                                /** Format: uri */
+                                sourceUrl: string;
+                            };
                             height?: number;
                             /** @default 0 */
                             position?: number;
@@ -1343,6 +1351,14 @@ export interface paths {
                             /** @default  */
                             alt?: string;
                             blurDataUrl?: string;
+                            credit?: {
+                                author: string;
+                                /** Format: uri */
+                                authorUrl: string;
+                                source: string;
+                                /** Format: uri */
+                                sourceUrl: string;
+                            };
                             height?: number;
                             /** @default 0 */
                             position?: number;
@@ -1822,6 +1838,121 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/media/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A signed ticket for one photograph upload, straight from the browser to Cloudinary.
+         * @description Post the file to `uploadUrl` as multipart form data with `api_key`, `timestamp`, `folder`, `allowed_formats` and `signature` exactly as given. The signature covers the folder and the formats, and Cloudinary refuses it after an hour.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The ticket. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["UploadTicket"];
+                        };
+                    };
+                };
+                /** @description Cloudinary is not configured on this shop. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/media/uploads/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * What Cloudinary holds under a public id just uploaded, as a product image stores it.
+         * @description Read from Cloudinary, not from the browser: width, height and a blur placeholder. Only ids in the shop’s products folder are looked up.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        publicId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The photograph. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["UploadedPhotograph"];
+                        };
+                    };
+                };
+                /** @description Not found, or not visible to this caller. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Cloudinary is not configured, or did not answer. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -5743,6 +5874,13 @@ export interface components {
             images: {
                 alt: string;
                 blurDataUrl?: string;
+                /** @description Who took a photograph the shop did not, printed beside it as "Photo by {author} on {source}". Present on every Unsplash photograph (ADR-015). */
+                credit?: {
+                    author: string;
+                    authorUrl: string;
+                    source: string;
+                    sourceUrl: string;
+                };
                 height?: number;
                 position: number;
                 publicId: string;
@@ -6281,7 +6419,7 @@ export interface components {
             displayValue: string;
             group?: string;
             key: string;
-            /** @description The definition’s current label. Absent where the attribute no longer applies to the product’s category. */
+            /** @description The definition’s current label. Always present on the public product, which lists only the attributes its category still applies; absent on the console’s product, whose form takes labels from the effective attribute set. */
             label?: string;
             order: number;
             /** @enum {string} */
@@ -6303,6 +6441,13 @@ export interface components {
             images: {
                 alt: string;
                 blurDataUrl?: string;
+                /** @description Who took a photograph the shop did not, printed beside it as "Photo by {author} on {source}". Present on every Unsplash photograph (ADR-015). */
+                credit?: {
+                    author: string;
+                    authorUrl: string;
+                    source: string;
+                    sourceUrl: string;
+                };
                 height?: number;
                 position: number;
                 publicId: string;
@@ -6537,6 +6682,20 @@ export interface components {
             /** @description The shop has replied since the customer last opened the conversation. */
             unread: boolean;
         };
+        UploadedPhotograph: {
+            blurDataUrl?: string;
+            height: number;
+            publicId: string;
+            width: number;
+        };
+        UploadTicket: {
+            allowedFormats: string;
+            apiKey: string;
+            folder: string;
+            signature: string;
+            timestamp: number;
+            uploadUrl: string;
+        };
         /** @description There is no password field, and there never will be. Authentication is a code mailed to the address; see ADR-004. */
         User: {
             createdAt: string;
@@ -6635,6 +6794,8 @@ export type SchemaStorefrontVersion = components['schemas']['StorefrontVersion']
 export type SchemaSupportMessage = components['schemas']['SupportMessage'];
 export type SchemaSupportTicket = components['schemas']['SupportTicket'];
 export type SchemaSupportTicketSummary = components['schemas']['SupportTicketSummary'];
+export type SchemaUploadedPhotograph = components['schemas']['UploadedPhotograph'];
+export type SchemaUploadTicket = components['schemas']['UploadTicket'];
 export type SchemaUser = components['schemas']['User'];
 export type SchemaVariant = components['schemas']['Variant'];
 export type SchemaWishlistEntry = components['schemas']['WishlistEntry'];

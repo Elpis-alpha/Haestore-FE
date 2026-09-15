@@ -76,8 +76,18 @@ export function ReviewDialog({
         ...(body.trim() ? { body: body.trim() } : {}),
       });
       setOpen(false);
-      // The page lists what is waiting and what is written, both read on the server.
-      router.refresh();
+      // The page lists what is waiting and what is written, both read on the server, so it is
+      // read again. Arriving from an order's "Review it" link (`?write=<product>`), the
+      // parameter goes as well: the product has just moved to the written list, whose dialog
+      // also opens for that parameter, and until Phase 10 the dialog that had just closed
+      // reopened at once as "Edit your review". The end-to-end suite found it.
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('write')) {
+        url.searchParams.delete('write');
+        router.replace(`${url.pathname}${url.search}`, { scroll: false });
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       setErrors(fieldErrorsOf(error));
       setMessage(error instanceof RequestError ? error.message : 'Your review could not be saved.');

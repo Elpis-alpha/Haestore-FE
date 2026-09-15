@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
      * does — including generating the LQIP used for `placeholder="blur"`.
      */
     loader: 'custom',
-    loaderFile: './src/lib/images/cloudinary-loader.ts',
+    loaderFile: './src/lib/images/image-loader.ts',
   },
 
   async rewrites() {

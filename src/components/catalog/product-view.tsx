@@ -121,6 +121,8 @@ export function ProductView({
           </ArchFrame>
         </SharedElement>
 
+        {active?.credit && <PhotoCredit credit={active.credit} />}
+
         {images.length > 1 && (
           <ul className="flex flex-wrap gap-2.5">
             {images.map((image, index) => (
@@ -366,4 +368,31 @@ function matches(variant: Variant, selection: Record<string, string>): boolean {
 function prettify(value: string): string {
   const spaced = value.replace(/[-_]+/g, ' ').trim();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+type ImageCredit = NonNullable<Product['images'][number]['credit']>;
+
+/**
+ * Who took the photograph, when the shop did not.
+ *
+ * Unsplash's licence asks for the photographer and Unsplash to be named, with links, wherever
+ * one of its photographs is shown, and this is the page that shows it at size (ADR-015). It
+ * follows the photograph as the gallery changes, so the name beside the picture is always
+ * the name of whoever took that picture. Quiet on purpose: it is a credit, not a caption.
+ */
+function PhotoCredit({ credit }: { credit: ImageCredit }) {
+  const link =
+    'underline decoration-[var(--rule)] underline-offset-4 hover:text-[var(--ink)] hover:decoration-[var(--ink-muted)]';
+  return (
+    <p className="-mt-1 text-xs text-[var(--ink-faint)]">
+      Photo by{' '}
+      <a href={credit.authorUrl} className={link}>
+        {credit.author}
+      </a>{' '}
+      on{' '}
+      <a href={credit.sourceUrl} className={link}>
+        {credit.source}
+      </a>
+    </p>
+  );
 }
