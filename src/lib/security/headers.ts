@@ -43,11 +43,16 @@ const POLICY: Record<string, string[]> = {
   'form-action': ["'self'"],
 };
 
+/**
+ * No `upgrade-insecure-requests`. Deployed, the site is https throughout and HSTS covers
+ * the page, so it would change nothing there; on an http run of the production build
+ * (`cf:preview`, `next start`) it sends every redirect to https://localhost, which
+ * breaks the sign-in redirect and the listing's canonical 308s.
+ */
 export function contentSecurityPolicy(): string {
-  return [
-    ...Object.entries(POLICY).map(([name, sources]) => `${name} ${sources.join(' ')}`),
-    'upgrade-insecure-requests',
-  ].join('; ');
+  return Object.entries(POLICY)
+    .map(([name, sources]) => `${name} ${sources.join(' ')}`)
+    .join('; ');
 }
 
 export function securityHeaders(): { key: string; value: string }[] {
