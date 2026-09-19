@@ -6,15 +6,18 @@ import {
   type RawSearchParams,
 } from '@/lib/listing/params';
 import { SESSION_COOKIE } from '@/lib/auth/cookie-name';
+import { stampClientIp } from '@/lib/proxy/client-ip';
 
 /**
- * Two jobs, both of which have to happen before anything renders.
+ * Three jobs, all of which have to happen before the request goes anywhere.
  *
  * 1. **One URL per set of filters.** Anything non-canonical gets a 308.
  * 2. **A closed door on the account area and the admin console**, so a signed-out
  *    visitor is redirected instead of rendering a page that then redirects.
+ * 3. **The shopper's address on proxied API calls**, which the API needs for its sign-in
+ *    throttle and cannot otherwise see (lib/proxy/client-ip.ts).
  *
- * Both are here for the same reason: by the time a server component runs, Next has
+ * The first two are here for the same reason: by the time a server component runs, Next has
  * begun streaming the shell, so `redirect()` can no longer set a status — it degrades
  * to a `<meta http-equiv="refresh">` in the body. That is a visible flash for a person
  * and, for a crawler, the duplicate-content signal canonicalisation exists to remove.
@@ -22,6 +25,11 @@ import { SESSION_COOKIE } from '@/lib/auth/cookie-name';
  */
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
+
+  if (url.pathname.startsWith('/api/')) {
+    const headers = stampClientIp(request.headers, process.env.PROXY_SHARED_SECRET);
+    return headers ? NextResponse.next({ request: { headers } }) : NextResponse.next();
+  }
 
   if (
     url.pathname === '/account' ||
@@ -82,9 +90,18 @@ function canonicaliseListing(request: NextRequest) {
 
 export const config = {
   /**
-   * The listing routes, the account area and the admin console, and nothing else. The product page and the
+   * The listing routes, the account area, the admin console and `/api/*` (where the only
+   * job is stamping the shopper's address), and nothing else. The product page and the
    * home page have no query state to canonicalise and no session to check, and running
    * this over `/_next/*` would put a redirect check in front of every asset request.
    */
-  matcher: ['/shop', '/shop/:path*', '/account', '/account/:path*', '/admin', '/admin/:path*'],
+  matcher: [
+    '/shop',
+    '/shop/:path*',
+    '/account',
+    '/account/:path*',
+    '/admin',
+    '/admin/:path*',
+    '/api/:path*',
+  ],
 };
