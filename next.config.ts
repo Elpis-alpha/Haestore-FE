@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import { securityHeaders } from './src/lib/security/headers';
+import { assertWorkerApiOrigin } from './src/lib/proxy/api-origin';
 import { assertTestModeKeys } from './src/lib/security/payment-mode';
 
 const API_ORIGIN = process.env.API_ORIGIN ?? 'http://127.0.0.1:5000';
@@ -7,6 +8,9 @@ const API_ORIGIN = process.env.API_ORIGIN ?? 'http://127.0.0.1:5000';
 // A live Stripe key fails the build rather than shipping a checkout that takes real
 // money (ADR-016).
 assertTestModeKeys(process.env);
+// A Worker build with no API_ORIGIN, or one with a port, would proxy every /api call to
+// a 500 (lib/proxy/api-origin.ts).
+assertWorkerApiOrigin(process.env);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

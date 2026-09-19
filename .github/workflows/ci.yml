@@ -66,6 +66,10 @@ jobs:
       # dependency at review time rather than at deploy time.
       - name: Build Cloudflare Worker
         run: npm run cf:build
+        env:
+          # A Worker build must name the API's public origin, without a port
+          # (src/lib/proxy/api-origin.ts). CI only proves the Worker builds.
+          API_ORIGIN: https://api.example.com
 
       - name: Report bundle size against the 3 MiB limit
         run: npx wrangler deploy --dry-run --outdir=.wrangler/dry 2>&1 | grep -i 'total upload' || true
