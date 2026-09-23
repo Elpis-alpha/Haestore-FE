@@ -11,15 +11,29 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS",
   },
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+  },
   // Page and fetch cache (open-next.config.ts). Create once with
   //   npx wrangler kv namespace create NEXT_INC_CACHE_KV
   // and paste the id here. See docs/DEPLOYMENT.md.
-  "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "bddec8b5666d49d3908ecd542aebf8c0",
+    },
+  ],
   // The revalidation queue re-renders a stale page by calling this Worker.
-  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "haestore-web" }],
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "haestore-web",
+    },
+  ],
   // Runtime values. API_ORIGIN is ALSO needed at build time — the /api rewrite is fixed
   // then — so set it in both places. PROXY_SHARED_SECRET is a secret, never here:
   //   npx wrangler secret put PROXY_SHARED_SECRET
-  "vars": { "API_ORIGIN": "https://api.haestore.elpis.cc" }
+  "vars": {
+    "API_ORIGIN": "https://api.haestore.elpis.cc",
+  },
 }
