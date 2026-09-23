@@ -1,6 +1,16 @@
 import type { NextConfig } from 'next';
+import { securityHeaders } from './src/lib/security/headers';
+import { assertWorkerApiOrigin } from './src/lib/proxy/api-origin';
+import { assertTestModeKeys } from './src/lib/security/payment-mode';
 
 const API_ORIGIN = process.env.API_ORIGIN ?? 'http://127.0.0.1:5000';
+
+// A live Stripe key fails the build rather than shipping a checkout that takes real
+// money (ADR-016).
+assertTestModeKeys(process.env);
+// A Worker build with no API_ORIGIN, or one with a port, would proxy every /api call to
+// a 500 (lib/proxy/api-origin.ts).
+assertWorkerApiOrigin(process.env);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -29,6 +39,16 @@ const nextConfig: NextConfig = {
      */
     loader: 'custom',
     loaderFile: './src/lib/images/image-loader.ts',
+  },
+
+  async headers() {
+    /**
+     * Production only: the development server needs `eval` for Fast Refresh, and a CSP
+     * that has to be loosened to work in development is one nobody trusts when it
+     * reports. `next build` — and so the Worker — always runs as production.
+     */
+    if (process.env.NODE_ENV !== 'production') return [];
+    return [{ source: '/:path*', headers: securityHeaders() }];
   },
 
   async rewrites() {

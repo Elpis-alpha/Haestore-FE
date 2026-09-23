@@ -91,7 +91,12 @@ export function StorefrontComposer({
           method: 'POST',
           body: { revision },
         }),
-      { done: `Version ${draft.version} is live`, description: 'The front page shows it now.' },
+      {
+        done: `Version ${draft.version} is published`,
+        // Instant locally; on the deployed Worker the cached front page turns over within
+        // five minutes, because there is no tag cache (open-next.config.ts).
+        description: 'Visitors see it within five minutes.',
+      },
     );
     if (result.ok) await refreshFrontPage();
   }

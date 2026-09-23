@@ -1,0 +1,4 @@
+# Workers static assets. Everything under /_next/static is content-hashed, so it can
+# be cached forever; a new build produces new names.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
